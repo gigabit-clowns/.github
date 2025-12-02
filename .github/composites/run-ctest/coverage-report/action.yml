@@ -19,22 +19,19 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Generate coverage report (GCC)
-      if: inputs.compiler-cc == 'gcc' && inputs.compiler-cxx == 'g++'
-      working-directory: "${{ github.workspace }}/build"
+    - name: Set gcov executable
+      id: set-gcov-executable
+      if: inputs.compiler-cc != 'cl' && inputs.compiler-cxx != 'cl'
       shell: bash
-      env:
-        REPORT_PATH: ${{ github.workspace }}/build/coverage.xml
       run: |
-        gcovr -r "${{ github.workspace }}" \
-          --object-directory "${{ github.workspace }}/build" \
-          --sonarqube -o "$REPORT_PATH" \
-          --txt report.txt \
-          --exclude '.*_deps/.*'
-        cat report.txt
+        if [[ "${{ inputs.compiler-cc }}" == "clang" && "${{ inputs.compiler-cxx }}" == "clang++" ]]; then
+          echo "gcov-executable=llvm-cov gcov" >> "$GITHUB_OUTPUT"
+        else
+          echo "gcov-executable=gcov" >> "$GITHUB_OUTPUT"
+        fi
 
-    - name: Generate coverage report (Clang)
-      if: inputs.compiler-cc == 'clang' && inputs.compiler-cxx == 'clang++'
+    - name: Generate coverage report (Linux)
+      if: inputs.compiler-cc != 'cl' && inputs.compiler-cxx != 'cl'
       working-directory: "${{ github.workspace }}/build"
       shell: bash
       env:
@@ -42,7 +39,7 @@ runs:
       run: |
         gcovr -r "${{ github.workspace }}" \
           --object-directory "${{ github.workspace }}/build" \
-          --gcov-executable "llvm-cov gcov" \
+          --gcov-executable "${{ steps.set-gcov-executable.outputs.gcov-executable }}" \
           --sonarqube -o "$REPORT_PATH" \
           --txt report.txt \
           --exclude '.*_deps/.*'
@@ -50,7 +47,7 @@ runs:
 
     - name: Generate coverage report (Windows)
       if: inputs.compiler-cc == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
-      uses: ./.github/composites/run-ctest
+      uses: gigabit-clowns/.github/.github/composites/run-ctest@main
       with:
         test-wrapper: '"${{ inputs.cl-coverage-tool }}" --export_type="cobertura:${{ github.workspace }}/build/coverage.xml" --sources="../src;../include" --'
 
