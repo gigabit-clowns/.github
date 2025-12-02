@@ -17,7 +17,7 @@ runs:
           sudo apt-get update
           sudo apt-get install -y valgrind
         else
-          echo "This system is not supported as it does not use apt"
+          echo "Could not find a package manager for this system"
           exit 1
         fi
 
