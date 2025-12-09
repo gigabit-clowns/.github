@@ -1,20 +1,20 @@
 name: "Generate Coverage Report"
-description: "Generates coverage reports for every OS"
+description: "Generates coverage reports for every OS."
 
 inputs:
   compiler-cc:
-    description: "C compiler being used by the runner"
+    description: "C compiler being used by the runner."
     required: true
   compiler-cxx:
-    description: "C++ compiler being used by the runner"
+    description: "C++ compiler being used by the runner."
     required: true
   cl-coverage-tool:
-    description: "Path to the coverage tool used by Windows with MSVC"
+    description: "Path to the coverage tool used by Windows with MSVC."
     required: false
-outputs:
   report-path:
-    description: "Full path to the coverage report." 
-    value: ${{ steps.generate-report.outputs.report-path }}
+    description: "Path to save the coverage report."
+    required: false
+    default: "coverage.xml"
 
 runs:
   using: "composite"
@@ -34,26 +34,26 @@ runs:
       if: inputs.compiler-cc != 'cl' && inputs.compiler-cxx != 'cl'
       working-directory: "${{ github.workspace }}/build"
       shell: bash
-      env:
-        REPORT_PATH: ${{ github.workspace }}/build/coverage.xml
       run: |
         gcovr -r "${{ github.workspace }}" \
           --object-directory "${{ github.workspace }}/build" \
           --gcov-executable "${{ steps.set-gcov-executable.outputs.gcov-executable }}" \
-          --sonarqube -o "$REPORT_PATH" \
+          --cobertura -o "${{ inputs.report-path }}" \
           --txt report.txt \
           --exclude '.*_deps/.*'
         cat report.txt
 
     - name: Generate coverage report (Windows)
       if: inputs.compiler-cc == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
-      uses: gigabit-clowns/.github/.github/composites/run-ctest@main
+      uses: ./.github/composites/run-ctest
       with:
-        test-wrapper: '"${{ inputs.cl-coverage-tool }}" --export_type="cobertura:${{ github.workspace }}/build/coverage.xml" --sources="../src;../include" --'
-
-    - name: Return coverage report path
-      id: generate-report
-      shell: bash
-      env:
-        REPORT_PATH: ${{ github.workspace }}/build/coverage.xml
-      run: echo "report-path=$REPORT_PATH" >> "$GITHUB_OUTPUT"
+        test-wrapper: >-
+          "${{ inputs.cl-coverage-tool }}" --working_dir="${{ github.workspace }}\build"
+          --modules="xmipp4-core.dll"
+          --excluded_sources="*tests*"
+          --excluded_sources="*_deps*"
+          --excluded_sources="*Program Files*"
+          --excluded_sources="*Microsoft Visual Studio*"
+          --excluded_sources="*_work*"
+          --export_type="cobertura:${{ inputs.report-path }}"
+          --cover_children --

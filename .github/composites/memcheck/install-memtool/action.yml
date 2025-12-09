@@ -1,9 +1,9 @@
 name: "Install Memcheck tool"
-description: "Installs the required memcheck tool for every OS"
+description: "Installs the required memcheck tool for every OS."
 
 outputs:
   drmemory:
-    description: "Full path to Dr. Memory executable"
+    description: "Full path to Dr. Memory executable."
     value: ${{ steps.install-drmemory.outputs.drmemory }}
 
 runs:
@@ -13,7 +13,7 @@ runs:
       if: runner.os == 'Linux'
       shell: bash
       run: |
-        if which apt; then
+        if which apt-get; then
           sudo apt-get update
           sudo apt-get install -y valgrind
         else
