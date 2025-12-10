@@ -33,7 +33,7 @@ runs:
     - name: Run tests with memory check (Windows)
       if: runner.os == 'Windows'
       working-directory: "${{ github.workspace }}/build"
-      shell: bash
+      shell: cmd
       env:
         DRMEMORY: ${{ inputs.drmemory }}
       run: $DRMEMORY -show_reachable -- ctest -C ${{ env.BUILD_TYPE }} --rerun-failed --output-on-failure

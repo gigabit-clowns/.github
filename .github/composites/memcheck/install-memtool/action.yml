@@ -2,9 +2,12 @@ name: "Install Memcheck tool"
 description: "Installs the required memcheck tool for every OS."
 
 outputs:
-  drmemory:
-    description: "Full path to Dr. Memory executable."
-    value: ${{ steps.install-drmemory.outputs.drmemory }}
+  drmemory-bash:
+    description: "Full path to Dr. Memory (in bash format)."
+    value: ${{ steps.install-drmemory-bash.outputs.drmemory }}
+  drmemory-pwsh:
+    description: "Full path to Dr. Memory (in Powershell format)."
+    value: ${{ steps.install-drmemory-cmd.outputs.drmemory }}
 
 runs:
   using: "composite"
@@ -22,9 +25,17 @@ runs:
         fi
 
     - name: Install Dr. Memory (Windows)
-      id: install-drmemory
+      id: install-drmemory-bash
       if: runner.os == 'Windows'
       shell: bash
       run: |
         choco install drmemory
         echo "drmemory=\"/c/Program Files (x86)/Dr. Memory/bin/drmemory.exe\"" >> "$GITHUB_OUTPUT"
+
+    - name: Export Dr. Memory path for Windows (Powershell)
+      id: install-drmemory-pwsh
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $path = 'C:\Program Files (x86)\Dr. Memory\bin\drmemory.exe'
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "drmemory=$path"
