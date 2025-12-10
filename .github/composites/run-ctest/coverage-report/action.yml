@@ -2,7 +2,7 @@ name: "Generate Coverage Report"
 description: "Generates coverage reports for every OS."
 
 inputs:
-  compiler-cc:
+  compiler-c:
     description: "C compiler being used by the runner."
     required: true
   compiler-cxx:
@@ -21,17 +21,17 @@ runs:
   steps:
     - name: Set gcov executable
       id: set-gcov-executable
-      if: inputs.compiler-cc != 'cl' && inputs.compiler-cxx != 'cl'
+      if: inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
       shell: bash
       run: |
-        if [[ "${{ inputs.compiler-cc }}" == "clang" && "${{ inputs.compiler-cxx }}" == "clang++" ]]; then
+        if [[ "${{ inputs.compiler-c }}" == "clang" && "${{ inputs.compiler-cxx }}" == "clang++" ]]; then
           echo "gcov-executable=llvm-cov gcov" >> "$GITHUB_OUTPUT"
         else
           echo "gcov-executable=gcov" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Generate coverage report (Linux)
-      if: inputs.compiler-cc != 'cl' && inputs.compiler-cxx != 'cl'
+      if: inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
       working-directory: "${{ github.workspace }}/build"
       shell: bash
       run: |
@@ -44,7 +44,7 @@ runs:
         cat report.txt
 
     - name: Generate coverage report (Windows)
-      if: inputs.compiler-cc == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
+      if: inputs.compiler-c == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
       uses: gigabit-clowns/.github/.github/composites/run-ctest@main
       with:
         test-wrapper: >-
