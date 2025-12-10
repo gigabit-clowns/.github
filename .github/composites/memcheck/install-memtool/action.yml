@@ -7,7 +7,7 @@ outputs:
     value: ${{ steps.install-drmemory-bash.outputs.drmemory }}
   drmemory-pwsh:
     description: "Full path to Dr. Memory (in Powershell format)."
-    value: ${{ steps.install-drmemory-cmd.outputs.drmemory }}
+    value: ${{ steps.install-drmemory-pwsh.outputs.drmemory }}
 
 runs:
   using: "composite"
