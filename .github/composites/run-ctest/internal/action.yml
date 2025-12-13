@@ -1,0 +1,20 @@
+name: "Run CMake tests (internal)"
+description: "Runs CMake tests for every OS. Intended for internal use only."
+
+inputs:
+  test-wrapper:
+    description: "Wrapper command to run tests (e.g. OpenCppCoverage). Will be ignored if used with check-memleak."
+    required: false
+    default: ""
+  test-extra-params:
+    description: "Extra params and/or commands that can be added at the right of the ctest call. Will be ignored if used with check-memleak."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run tests without memory check
+      working-directory: "${{ github.workspace }}/build"
+      shell: ${{ runner.os == 'Windows' && 'cmd' || 'bash' }}
+      run: ${{ inputs.test-wrapper }} ctest -C ${{ env.BUILD_TYPE }} --rerun-failed --output-on-failure ${{ inputs.test-extra-params }}
