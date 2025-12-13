@@ -60,6 +60,13 @@ runs:
       run: mv ./build/Cobertura.xml ./build/coverage.xml
     #### Coverage report section end ####
 
+    # TODO REMOVE
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v5
+      with:
+        name: test
+        path: build/coverage.xml
+
     # Regular scan for most events
     - name: SonarQube scan for most events
       if: ${{ github.event_name != 'workflow_dispatch' }}
