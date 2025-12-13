@@ -1,10 +1,6 @@
 name: "Run CMake tests with memcheck"
 description: "Runs CMake tests for every OS with memcheck."
 
-inputs:
-  drmemory:
-    description: "Full path to Dr. Memory executable."
-    required: false
 outputs:
   exist-memleaks:
     description: "If True, the tests run show memory leaks." 
@@ -18,29 +14,35 @@ runs:
   steps:
     - name: Run tests with memory check (Linux)
       if: runner.os == 'Linux'
-      working-directory: "${{ github.workspace }}/build"
-      shell: bash
-      run: ctest -C ${{ env.BUILD_TYPE }} -T memcheck --rerun-failed --output-on-failure | tee ${{ github.workspace }}/memcheck_output.txt
+      uses: gigabit-clowns/.github/.github/composites/run-ctest@main
+      with:
+        test-extra-params: >-
+          -T memcheck | tee ${{ github.workspace }}/memcheck_output.txt
 
     - name: Run tests with memory check (MacOS)
       if: runner.os == 'macOS'
-      working-directory: "${{ github.workspace }}/build"
-      shell: bash
-      run: |
-        export MallocStackLogging=1
-        leaks --fullContent --atExit -- ctest -C ${{ env.BUILD_TYPE }} --rerun-failed --output-on-failure
+      uses: gigabit-clowns/.github/.github/composites/run-ctest@main
+      with:
+        test-wrapper: >-
+          export MallocStackLogging=1 && leaks --fullContent --atExit --
+
+    - name: Get Dr. Memory's path (Windows)
+      id: export-memtool
+      if: runner.os == 'Windows'
+      uses: gigabit-clowns/.github/.github/composites/memcheck/install-memtool@main
+      with:
+        only-export-path: true
 
     - name: Run tests with memory check (Windows)
       if: runner.os == 'Windows'
-      working-directory: "${{ github.workspace }}/build"
-      shell: cmd
-      env:
-        DRMEMORY: ${{ inputs.drmemory }}
-      run: $DRMEMORY -show_reachable -- ctest -C ${{ env.BUILD_TYPE }} --rerun-failed --output-on-failure
+      uses: gigabit-clowns/.github/.github/composites/run-ctest@main
+      with:
+        test-wrapper: >-
+          "${{ steps.export-memtool.outputs.drmemory-pwsh }}" -show_reachable --
 
     - name: Check if there are any memory leaks
-      if: inputs.check-memleaks == 'true'
       id: check-memleaks
+      if: inputs.check-memleaks == 'true'
       shell: bash
       run: |
         # Check if there are any memory leaks
