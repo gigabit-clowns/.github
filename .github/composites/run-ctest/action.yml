@@ -28,6 +28,9 @@ runs:
     - name: Run tests without memory check
       if: inputs.check-memleaks == 'false'
       uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@main
+      with:
+        test-wrapper: ${{ inputs.test-wrapper }}
+        test-extra-params: ${{ inputs.test-extra-params }}
 
     - name: Run tests with memory check
       id: run-with-memcheck

@@ -45,7 +45,7 @@ runs:
 
     - name: Generate coverage report (Windows)
       if: inputs.compiler-c == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
-      uses: gigabit-clowns/.github/.github/composites/run-ctest@main
+      uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@main
       with:
         test-wrapper: >-
           "${{ inputs.cl-coverage-tool }}" --working_dir="${{ github.workspace }}\build"
