@@ -27,9 +27,7 @@ runs:
   steps:
     - name: Run tests without memory check
       if: inputs.check-memleaks == 'false'
-      working-directory: "${{ github.workspace }}/build"
-      shell: ${{ runner.os == 'Windows' && 'cmd' || 'bash' }}
-      run: ${{ inputs.test-wrapper }} ctest -C ${{ env.BUILD_TYPE }} --rerun-failed --output-on-failure ${{ inputs.test-extra-params }}
+      uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@main
 
     - name: Run tests with memory check
       id: run-with-memcheck
