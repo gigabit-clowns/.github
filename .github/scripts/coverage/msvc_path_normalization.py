@@ -3,7 +3,7 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 
-WS = os.environ.get('GITHUB_WORKSPACE', '')
+WS = os.path.abspath('').replace('\\','/')
 
 if __name__ == '__main__':
 	# Parse arguments 
@@ -13,19 +13,13 @@ if __name__ == '__main__':
 	parser.add_argument('--placeholder', '-p', help='Placeholder to use for the workspace path.', required=True)
 	args = parser.parse_args()
 	coverage_file = os.path.abspath(args.coverage_file)
-	output_file = os.path.abspath(args.output) if args.output else coverage_file
+	output_file = os.path.abspath(args.output) or coverage_file
 	placeholder = args.placeholder
 
 	# Check if the coverage file exists
 	if not os.path.isfile(coverage_file):
 		print(f"Error: Coverage file '{coverage_file}' does not exist.", file=sys.stderr)
 		sys.exit(1)
-	
-	# Check that we have a workspace
-	if not WS:
-		print("Error: GITHUB_WORKSPACE environment variable is not set.", file=sys.stderr)
-		sys.exit(1)
-	WS = WS.replace('\\','/')
 
 	# Parse the XML file
 	tree = ET.parse(coverage_file)
