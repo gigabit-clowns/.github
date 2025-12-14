@@ -37,7 +37,7 @@ runs:
       shell: bash
       run: choco install drmemory
 
-    - name: Download oolchain file (Windows)
+    - name: Download toolchain file (Windows)
       id: toolchain-file
       if: runner.os == 'Windows'
       shell: bash
@@ -68,3 +68,4 @@ runs:
       run: |
         $path = 'C:\Program Files (x86)\Dr. Memory\bin64\drmemory.exe'
         Add-Content -Path $env:GITHUB_OUTPUT -Value "drmemory=$path"
+
