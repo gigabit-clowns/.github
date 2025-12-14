@@ -30,7 +30,7 @@ runs:
           echo "gcov-executable=gcov" >> "$GITHUB_OUTPUT"
         fi
 
-    - name: Generate coverage report (Linux)
+    - name: Generate coverage report (all but MSVC)
       if: inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
       working-directory: "${{ github.workspace }}/build"
       shell: bash
@@ -43,17 +43,37 @@ runs:
           --exclude '.*_deps/.*'
         cat report.txt
 
-    - name: Generate coverage report (Windows)
+        # Replace workspace with placeholder for later unification
+        ws=$(echo "$GITHUB_WORKSPACE" | sed 's|\\|/|g')
+        sed -i.bak "s|$ws|GITHUB_WORKSPACE|g" "${{ inputs.report-path }}"
+        rm -f "${{ inputs.report-path }}.bak"
+
+    - name: Generate coverage report (Windows with MSVC)
       if: inputs.compiler-c == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
       uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@main
       with:
         test-wrapper: >-
           "${{ inputs.cl-coverage-tool }}" --working_dir="${{ github.workspace }}\build"
           --modules="xmipp4-core.dll"
-          --excluded_sources="*tests*"
+          --sources="${{ github.workspace }}"
           --excluded_sources="*_deps*"
-          --excluded_sources="*Program Files*"
-          --excluded_sources="*Microsoft Visual Studio*"
           --excluded_sources="*_work*"
           --export_type="cobertura:${{ inputs.report-path }}"
           --cover_children --
+
+    - name: Normalize report paths (Windows with MSVC)
+      if: inputs.compiler-c == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
+      shell: bash
+      run: |
+        target="$GITHUB_WORKSPACE/msvc_path_normalization.py"
+        url="https://raw.githubusercontent.com/gigabit-clowns/.github/main/.github/scripts/coverage/msvc_path_normalization.py"
+
+        # Exit non-zero on HTTP errors
+        curl -sSLo "$target" --fail "$url" || {
+          echo "Failed to download $url"
+          curl -sS -I "$url"
+          exit 1
+        }
+
+        echo "Downloaded script to $target"
+        python ./msvc_path_normalization.py "${{ inputs.report-path }}" --placeholder="GITHUB_WORKSPACE"
