@@ -13,7 +13,7 @@ if __name__ == '__main__':
 	parser.add_argument('--placeholder', '-p', help='Placeholder to use for the workspace path.', required=True)
 	args = parser.parse_args()
 	coverage_file = os.path.abspath(args.coverage_file)
-	output_file = os.path.abspath(args.output) or coverage_file
+	output_file = os.path.abspath(args.output) if args.output else coverage_file
 	placeholder = args.placeholder
 
 	# Check if the coverage file exists
