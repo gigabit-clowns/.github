@@ -39,14 +39,7 @@ runs:
           --object-directory "${{ github.workspace }}/build" \
           --gcov-executable "${{ steps.set-gcov-executable.outputs.gcov-executable }}" \
           --cobertura -o "${{ inputs.report-path }}" \
-          --txt report.txt \
           --exclude '.*_deps/.*'
-        cat report.txt
-
-        # Replace workspace with placeholder for later unification
-        ws=$(echo "$GITHUB_WORKSPACE" | sed 's|\\|/|g')
-        sed -i.bak "s|$ws|GITHUB_WORKSPACE|g" "${{ inputs.report-path }}"
-        rm -f "${{ inputs.report-path }}.bak"
 
     - name: Generate coverage report (Windows with MSVC)
       if: inputs.compiler-c == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
@@ -60,6 +53,19 @@ runs:
           --excluded_sources="*_work*"
           --export_type="cobertura:${{ inputs.report-path }}"
           --cover_children --
+
+    - name: Show coverage summary
+      shell: bash
+      run: pycobertura show --format=text "${{ inputs.report-path }}"
+
+    - name: Normalize report paths (all but MSVC)
+      if: inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
+      shell: bash
+      run: |
+        # Replace workspace with placeholder for later unification
+        ws=$(echo "$GITHUB_WORKSPACE" | sed 's|\\|/|g')
+        sed -i.bak "s|$ws|GITHUB_WORKSPACE|g" "${{ inputs.report-path }}"
+        rm -f "${{ inputs.report-path }}.bak"
 
     - name: Normalize report paths (Windows with MSVC)
       if: inputs.compiler-c == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
