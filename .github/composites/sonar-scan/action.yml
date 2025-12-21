@@ -84,7 +84,10 @@ runs:
     - name: Show merged coverage report # For debugging purposes
       if: ${{ inputs.show-coverage == 'true' }}
       shell: bash
-      run: pycobertura show --format=text build/coverage.xml
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pycobertura
+        pycobertura show --format=text build/coverage.xml
     #### Coverage report section end ####
 
     # Regular scan for most events
