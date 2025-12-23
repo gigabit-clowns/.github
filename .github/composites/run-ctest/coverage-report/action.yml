@@ -47,16 +47,12 @@ runs:
       with:
         test-wrapper: >-
           "${{ inputs.cl-coverage-tool }}" --working_dir="${{ github.workspace }}\build"
-          --modules="xmipp4-core.dll"
+          --modules="${{ github.event.repository.name }}"
           --sources="${{ github.workspace }}"
           --excluded_sources="*_deps*"
           --excluded_sources="*_work*"
           --export_type="cobertura:${{ inputs.report-path }}"
           --cover_children --
-
-    - name: Show coverage summary
-      shell: bash
-      run: pycobertura show --format=text "${{ inputs.report-path }}"
 
     - name: Normalize report paths (all but MSVC)
       if: inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
@@ -83,3 +79,7 @@ runs:
 
         echo "Downloaded script to $target"
         python ./msvc_path_normalization.py "${{ inputs.report-path }}" --placeholder="GITHUB_WORKSPACE"
+
+    - name: Show coverage summary
+      shell: bash
+      run: pycobertura show --format=text "${{ inputs.report-path }}"
