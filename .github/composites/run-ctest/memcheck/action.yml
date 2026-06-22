@@ -14,14 +14,14 @@ runs:
   steps:
     - name: Run tests with memory check (Linux)
       if: runner.os == 'Linux'
-      uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@e3c2b3c51c3227ce9dd38c7e606518986305ae51 # main
+      uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@195f5d0d15171c461f67c45761827333ae51c090 # main
       with:
         test-extra-params: >-
           -T memcheck | tee ${{ github.workspace }}/memcheck_output.txt
 
     - name: Run tests with memory check (MacOS)
       if: runner.os == 'macOS'
-      uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@e3c2b3c51c3227ce9dd38c7e606518986305ae51 # main
+      uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@195f5d0d15171c461f67c45761827333ae51c090 # main
       with:
         test-wrapper: >-
           export MallocStackLogging=1 && leaks --fullContent --atExit --
@@ -29,13 +29,13 @@ runs:
     - name: Get Dr. Memory's path (Windows)
       id: export-memtool
       if: runner.os == 'Windows'
-      uses: gigabit-clowns/.github/.github/composites/memcheck/install-memtool@e3c2b3c51c3227ce9dd38c7e606518986305ae51 # main
+      uses: gigabit-clowns/.github/.github/composites/memcheck/install-memtool@195f5d0d15171c461f67c45761827333ae51c090 # main
       with:
         only-export-path: true
 
     - name: Run tests with memory check (Windows)
       if: runner.os == 'Windows'
-      uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@e3c2b3c51c3227ce9dd38c7e606518986305ae51 # main
+      uses: gigabit-clowns/.github/.github/composites/run-ctest/internal@195f5d0d15171c461f67c45761827333ae51c090 # main
       with:
         test-wrapper: >-
           "${{ steps.export-memtool.outputs.drmemory-pwsh }}" -show_reachable --
