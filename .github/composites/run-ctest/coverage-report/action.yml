@@ -62,15 +62,19 @@ runs:
     - name: Normalize report paths (all but MSVC)
       if: inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
       shell: bash
+      env:
+        REPORT_PATH: ${{ inputs.report-path }}
       run: |
         # Replace workspace with placeholder for later unification
         ws=$(echo "$GITHUB_WORKSPACE" | sed 's|\\|/|g')
-        sed -i.bak "s|$ws|GITHUB_WORKSPACE|g" "${{ inputs.report-path }}"
-        rm -f "${{ inputs.report-path }}.bak"
+        sed -i.bak "s|$ws|GITHUB_WORKSPACE|g" "$REPORT_PATH"
+        rm -f "$REPORT_PATH.bak"
 
     - name: Normalize report paths (Windows with MSVC)
       if: inputs.compiler-c == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
       shell: bash
+      env:
+        REPORT_PATH: ${{ inputs.report-path }}
       run: |
         target="$GITHUB_WORKSPACE/msvc_path_normalization.py"
         url="https://raw.githubusercontent.com/gigabit-clowns/.github/main/.github/scripts/coverage/msvc_path_normalization.py"
@@ -83,8 +87,10 @@ runs:
         }
 
         echo "Downloaded script to $target"
-        python ./msvc_path_normalization.py "${{ inputs.report-path }}" --placeholder="GITHUB_WORKSPACE"
+        python ./msvc_path_normalization.py "$REPORT_PATH" --placeholder="GITHUB_WORKSPACE"
 
     - name: Show coverage summary
       shell: bash
-      run: pycobertura show --format=text "${{ inputs.report-path }}"
+      env:
+        REPORT_PATH: ${{ inputs.report-path }}
+      run: pycobertura show --format=text "$REPORT_PATH"
