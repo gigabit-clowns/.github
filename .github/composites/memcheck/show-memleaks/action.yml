@@ -13,8 +13,10 @@ runs:
       if: runner.os == 'Linux'
       working-directory: "${{ github.workspace }}/build/Testing/Temporary"
       shell: bash
+      env:
+        TEST_NUMBERS: ${{ inputs.test-numbers }}
       run: |
-        IFS=',' read -r -a test_numbers_array <<< "${{ inputs.test-numbers }}"
+        IFS=',' read -r -a test_numbers_array <<< "$TEST_NUMBERS"
         for number in "${test_numbers_array[@]}"; do
           echo "-------------------- Log for test number $number --------------------"
           cat MemoryChecker.$number.log

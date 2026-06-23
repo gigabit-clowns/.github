@@ -17,4 +17,7 @@ runs:
     - name: Run tests without memory check
       working-directory: "${{ github.workspace }}/build"
       shell: ${{ runner.os == 'Windows' && 'cmd' || 'bash' }}
-      run: ${{ inputs.test-wrapper }} ctest -C ${{ env.BUILD_TYPE }} --rerun-failed --output-on-failure ${{ inputs.test-extra-params }}
+      env:
+        TEST_WRAPPER: ${{ inputs.test-wrapper }}
+        TEST_EXTRA_PARAMS: ${{ inputs.test-extra-params }}
+      run: $TEST_WRAPPER ctest -C ${{ env.BUILD_TYPE }} --rerun-failed --output-on-failure $TEST_EXTRA_PARAMS
