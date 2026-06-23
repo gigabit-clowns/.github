@@ -14,10 +14,17 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Run tests without memory check
-      working-directory: "${{ github.workspace }}/build"
-      shell: ${{ runner.os == 'Windows' && 'cmd' || 'bash' }}
+    - name: Evaluate inputs
+      id: evaluate-inputs
+      shell: bash
       env:
         TEST_WRAPPER: ${{ inputs.test-wrapper }}
         TEST_EXTRA_PARAMS: ${{ inputs.test-extra-params }}
-      run: $TEST_WRAPPER ctest -C ${{ env.BUILD_TYPE }} --rerun-failed --output-on-failure $TEST_EXTRA_PARAMS
+      run: |
+        echo "test-wrapper=$TEST_WRAPPER" >> $GITHUB_OUTPUT
+        echo "test-extra-params=$TEST_EXTRA_PARAMS" >> $GITHUB_OUTPUT 
+
+    - name: Run tests without memory check
+      working-directory: "${{ github.workspace }}/build"
+      shell: ${{ runner.os == 'Windows' && 'cmd' || 'bash' }}
+      run: ${{ steps.evaluate-inputs.outputs.test-wrapper }} ctest -C ${{ env.BUILD_TYPE }} --rerun-failed --output-on-failure ${{ steps.evaluate-inputs.outputs.test-extra-params }}
