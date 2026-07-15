@@ -93,7 +93,7 @@ runs:
     # Regular scan for most events
     - name: SonarQube scan for most events
       if: ${{ github.event_name != 'workflow_dispatch' }}
-      uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8
+      uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8
       env:
         SONAR_TOKEN: ${{ inputs.sonar-token }}
 
@@ -101,7 +101,7 @@ runs:
     # will always treat it as main branch unless we specify the branch name
     - name: SonarQube scan for workflow_dispatch
       if: ${{ github.event_name == 'workflow_dispatch' }}
-      uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8
+      uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8
       env:
           SONAR_TOKEN: ${{ inputs.sonar-token }}
       with:
