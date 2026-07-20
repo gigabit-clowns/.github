@@ -43,9 +43,16 @@ runs:
         # JaCoCo is used instead of Cobertura: gcovr's Cobertura writer does an
         # O(functions x lines) per-file scan that becomes very slow on heavily
         # templated code, JaCoCo does not have this cost.
+        # --merge-lines collapses per-instantiation line records (e.g. one
+        # template instantiated many times) back onto a single physical
+        # source line; without it, an uncovered instantiation of a line that
+        # IS covered by other instantiations still reports as a separate
+        # "missing" line, which tanks the reported coverage on heavily
+        # templated code.
         gcovr -r "${{ github.workspace }}" \
           --object-directory "${{ github.workspace }}/build" \
           --gcov-executable "${{ steps.set-gcov-executable.outputs.gcov-executable }}" \
+          --merge-lines \
           --jacoco -o "$REPORT_PATH" \
           --txt "${REPORT_PATH%.xml}.txt" \
           --exclude '.*_deps/.*'
