@@ -66,13 +66,13 @@ runs:
       with:
         reports: ${{ inputs.coverage-path }}/${{ inputs.coverage-pattern }}/coverage.xml
         targetdir: build
-        reporttypes: Cobertura
+        reporttypes: SonarQube;TextSummary
         sourcedirs: ${{ github.workspace }}
-    
+
     - name: Rename merged coverage report
       if: ${{ inputs.coverage-pattern && inputs.coverage-path }}
       shell: bash
-      run: mv ./build/Cobertura.xml ./build/coverage.xml
+      run: mv ./build/SonarQube.xml ./build/coverage.xml
 
     - name: Upload merged coverage report # For debugging purposes
       if: ${{ inputs.show-coverage == 'true' }}
@@ -80,14 +80,11 @@ runs:
       with:
         name: merged-coverage-report
         path: build/coverage.xml
-    
+
     - name: Show merged coverage report # For debugging purposes
       if: ${{ inputs.show-coverage == 'true' }}
       shell: bash
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install pycobertura
-        pycobertura show --format=text build/coverage.xml
+      run: cat build/Summary.txt
     #### Coverage report section end ####
 
     # Regular scan for most events

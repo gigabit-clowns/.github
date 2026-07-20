@@ -40,10 +40,14 @@ runs:
       env:
         REPORT_PATH: ${{ inputs.report-path }}
       run: |
+        # JaCoCo is used instead of Cobertura: gcovr's Cobertura writer does an
+        # O(functions x lines) per-file scan that becomes very slow on heavily
+        # templated code, JaCoCo does not have this cost.
         gcovr -r "${{ github.workspace }}" \
           --object-directory "${{ github.workspace }}/build" \
           --gcov-executable "${{ steps.set-gcov-executable.outputs.gcov-executable }}" \
-          --cobertura -o "$REPORT_PATH" \
+          --jacoco -o "$REPORT_PATH" \
+          --txt "${REPORT_PATH%.xml}.txt" \
           --exclude '.*_deps/.*'
 
     - name: Generate coverage report (Windows with MSVC)
@@ -90,7 +94,8 @@ runs:
         python ./msvc_path_normalization.py "$REPORT_PATH" --placeholder="GITHUB_WORKSPACE"
 
     - name: Show coverage summary
+      if: inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
       shell: bash
       env:
         REPORT_PATH: ${{ inputs.report-path }}
-      run: pycobertura show --format=text "$REPORT_PATH"
+      run: cat "${REPORT_PATH%.xml}.txt"
