@@ -14,7 +14,7 @@ inputs:
   report-path:
     description: "Path to save the coverage report."
     required: false
-    default: "coverage.xml"
+    default: "coverage.lcov"
 
 runs:
   using: "composite"
@@ -40,9 +40,13 @@ runs:
       env:
         REPORT_PATH: ${{ inputs.report-path }}
       run: |
-        # JaCoCo is used instead of Cobertura: gcovr's Cobertura writer does an
+        # lcov is used instead of Cobertura: gcovr's Cobertura writer does an
         # O(functions x lines) per-file scan that becomes very slow on heavily
-        # templated code, JaCoCo does not have this cost.
+        # templated code, lcov does not have this cost. (JaCoCo was tried
+        # first, since it is also cheap to write, but gcovr's JaCoCo output
+        # omits <class> elements, which ReportGenerator's JaCoCo parser
+        # requires - it silently imports 0 files. lcov's plain-text tracefile
+        # format has no such ambiguity.)
         # --merge-lines collapses per-instantiation line records (e.g. one
         # template instantiated many times) back onto a single physical
         # source line; without it, an uncovered instantiation of a line that
@@ -53,8 +57,8 @@ runs:
           --object-directory "${{ github.workspace }}/build" \
           --gcov-executable "${{ steps.set-gcov-executable.outputs.gcov-executable }}" \
           --merge-lines \
-          --jacoco -o "$REPORT_PATH" \
-          --txt "${REPORT_PATH%.xml}.txt" \
+          --lcov="$REPORT_PATH" \
+          --txt="${REPORT_PATH%.lcov}.txt" \
           --exclude '.*_deps/.*'
 
     - name: Generate coverage report (Windows with MSVC)
