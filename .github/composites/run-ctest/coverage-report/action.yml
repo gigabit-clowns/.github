@@ -109,4 +109,4 @@ runs:
       shell: bash
       env:
         REPORT_PATH: ${{ inputs.report-path }}
-      run: cat "${REPORT_PATH%.xml}.txt"
+      run: cat "${REPORT_PATH%.lcov}.txt"
