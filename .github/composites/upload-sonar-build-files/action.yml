@@ -1,0 +1,38 @@
+name: "Upload build files for Sonar scan"
+description: "Uploads the files required for Sonar scan to run."
+
+inputs:
+  build-artifact-name:
+    description: "Name of the build artifact to download."
+    required: false
+    default: "build-artifact"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Stage what the scanner reads
+      shell: bash
+      run: |
+        jq -r '.[] | .command // (.arguments | join(" "))' build/compile_commands.json |
+          grep -oE -- '-(I|isystem) ?[^ ]+' |
+          sed -E 's/^-(I|isystem) ?//' |
+          xargs -r -n1 realpath -m |
+          sed -n "s|^$GITHUB_WORKSPACE/build/||p" |
+          sort -u > include-paths.txt
+        mkdir scanner-input
+        tar -C build -cf - -T include-paths.txt compile_commands.json |
+          tar -C scanner-input -xf -
+        jq -r '.[].directory' build/compile_commands.json |
+          sed -n "s|^$GITHUB_WORKSPACE/build/||p" |
+          sort -u |
+          while read -r directory; do
+            mkdir -p "scanner-input/$directory"
+            touch "scanner-input/$directory/.keep"
+          done
+
+    - name: Upload what the scanner reads
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: ${{ inputs.build-artifact-name }}
+        path: scanner-input
+        include-hidden-files: true
