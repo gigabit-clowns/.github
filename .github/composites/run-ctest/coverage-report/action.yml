@@ -81,16 +81,16 @@ runs:
         REPORT_PATH: ${{ inputs.report-path }}
       run: |
         target="$GITHUB_WORKSPACE/msvc_path_normalization.py"
-        url="https://raw.githubusercontent.com/gigabit-clowns/.github/main/.github/scripts/coverage/msvc_path_normalization.py"
-
-        # Exit non-zero on HTTP errors
-        curl -sSLo "$target" --fail "$url" || {
-          echo "Failed to download $url"
-          curl -sS -I "$url"
+        # Taken from beside this action, not fetched: the runner checks out the
+        # whole repository, and a URL pinned to main ignores the ref it is at.
+        source_file="$GITHUB_ACTION_PATH/../../../scripts/coverage/msvc_path_normalization.py"
+        [ -f "$source_file" ] || {
+          echo "No script at $source_file" >&2
           exit 1
         }
+        cp "$source_file" "$target"
 
-        echo "Downloaded script to $target"
+        echo "Copied script to $target"
         python ./msvc_path_normalization.py "$REPORT_PATH" --placeholder="GITHUB_WORKSPACE"
 
     - name: Show coverage summary
