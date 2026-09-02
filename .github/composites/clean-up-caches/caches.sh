@@ -73,6 +73,31 @@ select_superseded() {
 		| flatten' <<<"$1"
 }
 
+# Refs the repository still has. A merged pull request's merge ref is deleted
+# with it, so a cache left on one can never be restored again.
+# An empty answer would mark every cache dead, so a failure here stops the
+# run rather than reading as "no ref exists".
+live_refs() {
+	local refs
+	refs=$(git ls-remote "https://x-access-token:$GH_TOKEN@github.com/$GH_REPO" \
+		| awk '{print $2}')
+	if [ -z "$refs" ]; then
+		echo "No refs came back from the remote" >&2
+		return 1
+	fi
+	printf '%s\n' "$refs"
+}
+
+select_dead() {
+	jq -c --argjson live "$(printf '%s\n' "$2" | jq -R . | jq -s .)" \
+		'[.[] | select(.ref as $r | $live | index($r) | not)]' <<<"$1"
+}
+
+without() {
+	jq -c --argjson gone "$2" \
+		'[.[] | select(.id as $i | $gone | map(.id) | index($i) | not)]' <<<"$1"
+}
+
 # Over the ceiling GitHub evicts by last access, which takes a branch's
 # caches first: a pull request keeps touching its own, a branch does not.
 select_headroom() {

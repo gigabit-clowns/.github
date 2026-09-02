@@ -76,7 +76,15 @@ runs:
         caches=$(cat "$RUNNER_TEMP/caches.json")
         case "$SCOPE" in
           superseded) doomed=$(select_superseded "$caches") ;;
-          headroom) doomed=$(select_headroom "$caches" "$TARGET_MIB") ;;
+          headroom)
+            # Whatever the total, a cache on a ref that is gone is waste. Only
+            # once those are out does anything live get weighed.
+            dead=$(select_dead "$caches" "$(live_refs)")
+            doomed=$(jq -c -n --argjson d "$dead" --argjson m \
+              "$(select_headroom "$(without "$caches" "$dead")" "$TARGET_MIB")" \
+              '$d + $m')
+            printf '%s' "$dead" > "$RUNNER_TEMP/dead.json"
+            ;;
           all) doomed="$caches" ;;
         esac
         printf '%s' "$doomed" > "$RUNNER_TEMP/doomed.json"
@@ -90,13 +98,15 @@ runs:
         echo "Deleting $count:"
         tabulate "$doomed"
 
-        # Headroom takes caches nobody has finished with; say so where it is
-        # read, rather than leaving a surprise in the numbers.
         if [ "$SCOPE" = headroom ]; then
+          dead=$(cat "$RUNNER_TEMP/dead.json")
           echo
-          echo "These are still live. They go because the repository is over" \
-               "$TARGET_MIB MiB, and GitHub's own eviction would take a" \
-               "branch's caches instead."
+          printf '%s of these sit on a ref that no longer exists.\n' \
+            "$(jq 'length' <<<"$dead")"
+          # The rest are live; say so where it is read rather than leaving a
+          # surprise in the numbers.
+          echo "Any others go because the repository is over $TARGET_MIB MiB," \
+               "and GitHub's own eviction would take a branch's caches instead."
         fi
 
     - name: Delete them
