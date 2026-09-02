@@ -3,7 +3,7 @@ description: Deletes Actions caches and reports what it recovered.
 
 inputs:
   scope:
-    description: Which caches go, "every", "superseded" or "headroom".
+    description: Which caches go, "all", "superseded" or "headroom".
     required: true
   ref:
     description: Ref or branch to restrict to. Every ref when left empty.
@@ -32,7 +32,7 @@ runs:
         source "$GITHUB_ACTION_PATH/caches.sh"
 
         case "$SCOPE" in
-          every|superseded|headroom) ;;
+          all|superseded|headroom) ;;
           *) echo "Unknown scope '$SCOPE'" >&2; exit 1 ;;
         esac
 
@@ -77,7 +77,7 @@ runs:
         case "$SCOPE" in
           superseded) doomed=$(select_superseded "$caches") ;;
           headroom) doomed=$(select_headroom "$caches" "$TARGET_MIB") ;;
-          every) doomed="$caches" ;;
+          all) doomed="$caches" ;;
         esac
         printf '%s' "$doomed" > "$RUNNER_TEMP/doomed.json"
 

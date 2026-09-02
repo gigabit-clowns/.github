@@ -6,7 +6,7 @@ on:
     inputs:
       scope:
         # workflow_call has no choice type; the caller's dispatch has one.
-        description: Which caches go, "every" or "superseded".
+        description: Which caches go, "every" or "all".
         required: true
         type: string
       ref:
@@ -22,7 +22,7 @@ on:
 
 jobs:
   clean_up_caches:
-    name: Delete the ${{ inputs.scope }} caches
+    name: Delete ${{ inputs.scope }} caches
     permissions:
       actions: write
     runs-on: ubuntu-latest
