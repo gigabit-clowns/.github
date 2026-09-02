@@ -6,19 +6,20 @@ on:
   workflow_call:
     inputs:
       scope:
-        description: Which caches go, "every", "superseded" or "headroom".
+        # workflow_call has no choice type; the caller's dispatch has one.
+        description: Which caches go, "every" or "superseded".
         required: true
         type: string
-      target_mib:
-        description: What the headroom scope frees down to.
-        required: false
-        default: 8192
-        type: number
       ref:
-        description: Ref to restrict to. Every ref when left empty.
+        description: Ref or branch to restrict to. Every ref when left empty.
         required: false
         default: ""
         type: string
+      target_mib:
+        description: What the headroom pass frees down to.
+        required: false
+        default: 8192
+        type: number
 
 jobs:
   clean_up_caches:
@@ -26,102 +27,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clean up caches
-      shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
-        GH_REPO: ${{ github.repository }}
-        SCOPE: ${{ inputs.scope }}
-        REF: ${{ inputs.ref }}
-        TARGET_MIB: ${{ inputs.target_mib }}
-      run: |
-        set -euo pipefail
+      uses: gigabit-clowns/.github/.github/composites/clean-up-caches@main
+      with:
+        scope: ${{ inputs.scope }}
+        ref: ${{ inputs.ref }}
+        token: ${{ github.token }}
 
-        # GitHub reports what is in use but never the ceiling.
-        limit_mib=10240
-
-        # Summed from the listing rather than read from actions/cache/usage,
-        # which lags by minutes and would predate the run that got us here.
-        report_usage() {
-          local all used
-          all=$(gh cache list --limit 100 --json sizeInBytes)
-          used=$(jq '([.[].sizeInBytes] | add // 0) / 1048576 | floor' <<<"$all")
-          printf '%s: %s MiB of %s MiB across %s caches, %s MiB available\n' \
-            "$1" "$used" "$limit_mib" "$(jq 'length' <<<"$all")" \
-            "$(( limit_mib - used ))"
-        }
-
-        list_caches() {
-          if [ -n "$REF" ]; then
-            gh cache list --ref "$REF" --limit 100 \
-              --json id,key,ref,sizeInBytes,createdAt,lastAccessedAt
-          else
-            gh cache list --limit 100 \
-              --json id,key,ref,sizeInBytes,createdAt,lastAccessedAt
-          fi
-        }
-
-        tabulate() {
-          jq -r 'if length == 0 then "  none"
-                 else sort_by(.ref, .key)[]
-                      | "  \(((.sizeInBytes/1048576)|floor|tostring)) MiB\t\(.ref)\t\(.key)"
-                 end' <<<"$1" | column -t -s "$(printf '\t')"
-        }
-
-        echo "::group::Before"
-        report_usage Before
-        echo
-        echo "Caches in scope:"
-        caches=$(list_caches)
-        tabulate "$caches"
-        echo "::endgroup::"
-
-        # A cache cannot be overwritten, so each run leaves a new entry behind
-        # and only the newest of each prefix is ever restored. The key carries
-        # the timestamp that makes it unique, so grouping strips it.
-        if [ "$SCOPE" = superseded ]; then
-          doomed=$(jq -c '
-            group_by(.ref + "|" + (.key | sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$"; "")))
-            | map(sort_by(.createdAt) | .[0:-1])
-            | flatten' <<<"$caches")
-        elif [ "$SCOPE" = headroom ]; then
-          # Over the ceiling GitHub evicts by last access, which takes a
-          # branch's caches first: a pull request keeps touching its own.
-          doomed=$(jq -c --argjson t "$(( TARGET_MIB * 1048576 ))" '
-            ([.[].sizeInBytes] | add // 0) as $total
-            | if $total <= $t then []
-              else
-                ([.[] | select(.ref | startswith("refs/heads/") | not)]
-                 | sort_by(.lastAccessedAt)) as $c
-                | reduce range(0; $c | length) as $i
-                    ({need: ($total - $t), out: []};
-                     if .need > 0
-                     then {need: (.need - $c[$i].sizeInBytes),
-                           out: (.out + [$c[$i]])}
-                     else . end)
-                | .out
-              end' <<<"$caches")
-        else
-          doomed="$caches"
-        fi
-
-        count=$(jq 'length' <<<"$doomed")
-        if [ "$count" -eq 0 ]; then
-          echo "Nothing to delete."
-          exit 0
-        fi
-
-        echo "::group::Deleting $count"
-        tabulate "$doomed"
-        for id in $(jq -r '.[].id' <<<"$doomed"); do
-          gh cache delete "$id" > /dev/null
-        done
-        printf 'Deleted %s caches, reclaiming %s MiB.\n' "$count" \
-          "$(jq '([.[].sizeInBytes] | add // 0) / 1048576 | floor' <<<"$doomed")"
-        echo "::endgroup::"
-
-        echo "::group::After"
-        report_usage After
-        echo
-        echo "Caches left in scope:"
-        tabulate "$(list_caches)"
-        echo "::endgroup::"
+  headroom:
+    name: Free space if the repository is over its target
+    needs: [clean_up_caches]
+    # Every event fires one scope and skips the other, and a skipped job
+    # skips what needs it. This has to run either way, and after.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clean up caches
+      uses: gigabit-clowns/.github/.github/composites/clean-up-caches@main
+      with:
+        scope: headroom
+        target_mib: ${{ inputs.target_mib }}
+        token: ${{ github.token }}
