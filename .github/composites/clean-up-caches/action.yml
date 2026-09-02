@@ -1,0 +1,140 @@
+name: Clean up caches
+description: Deletes Actions caches and reports what it recovered.
+
+inputs:
+  scope:
+    description: Which caches go, "every", "superseded" or "headroom".
+    required: true
+  ref:
+    description: Ref or branch to restrict to. Every ref when left empty.
+    required: false
+    default: ""
+  target_mib:
+    description: What the headroom scope frees down to.
+    required: false
+    default: "8192"
+  token:
+    description: Token with write access to actions.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Report what the repository holds
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ github.repository }}
+        SCOPE: ${{ inputs.scope }}
+        REF: ${{ inputs.ref }}
+      run: |
+        set -euo pipefail
+        source "$GITHUB_ACTION_PATH/caches.sh"
+
+        case "$SCOPE" in
+          every|superseded|headroom) ;;
+          *) echo "Unknown scope '$SCOPE'" >&2; exit 1 ;;
+        esac
+
+        report_usage "Before"
+        echo
+
+        all=$(all_caches)
+        printf '%s' "$all" > "$RUNNER_TEMP/all.json"
+
+        # Headroom answers a question about the whole repository, so a ref
+        # would only hide what it has to weigh.
+        if [ "$SCOPE" = headroom ]; then
+          echo "Scope: the whole repository."
+          printf '%s' "$all" > "$RUNNER_TEMP/caches.json"
+          exit 0
+        fi
+
+        refs=$(resolve_refs "$REF")
+        if [ -n "$refs" ]; then
+          echo "Refs in scope:"
+          printf '  %s\n' $refs
+          echo
+        fi
+
+        caches=$(in_scope "$all" "$refs")
+        echo "Caches in scope:"
+        tabulate "$caches"
+        printf '%s' "$caches" > "$RUNNER_TEMP/caches.json"
+
+    - name: Pick the ones to delete
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ github.repository }}
+        SCOPE: ${{ inputs.scope }}
+        TARGET_MIB: ${{ inputs.target_mib }}
+      run: |
+        set -euo pipefail
+        source "$GITHUB_ACTION_PATH/caches.sh"
+
+        caches=$(cat "$RUNNER_TEMP/caches.json")
+        case "$SCOPE" in
+          superseded) doomed=$(select_superseded "$caches") ;;
+          headroom) doomed=$(select_headroom "$caches" "$TARGET_MIB") ;;
+          every) doomed="$caches" ;;
+        esac
+        printf '%s' "$doomed" > "$RUNNER_TEMP/doomed.json"
+
+        count=$(jq 'length' <<<"$doomed")
+        if [ "$count" -eq 0 ]; then
+          echo "Nothing to delete."
+          exit 0
+        fi
+
+        echo "Deleting $count:"
+        tabulate "$doomed"
+
+        # Headroom takes caches nobody has finished with; say so where it is
+        # read, rather than leaving a surprise in the numbers.
+        if [ "$SCOPE" = headroom ]; then
+          echo
+          echo "These are still live. They go because the repository is over" \
+               "$TARGET_MIB MiB, and GitHub's own eviction would take a" \
+               "branch's caches instead."
+        fi
+
+    - name: Delete them
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+        source "$GITHUB_ACTION_PATH/caches.sh"
+
+        doomed=$(cat "$RUNNER_TEMP/doomed.json")
+        count=$(jq 'length' <<<"$doomed")
+        if [ "$count" -eq 0 ]; then
+          exit 0
+        fi
+
+        for id in $(jq -r '.[].id' <<<"$doomed"); do
+          gh cache delete "$id" > /dev/null
+        done
+        echo "Deleted $count caches, reclaiming $(total_mib "$doomed") MiB."
+
+    - name: Report what is left
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ github.repository }}
+        REF: ${{ inputs.ref }}
+        SCOPE: ${{ inputs.scope }}
+      run: |
+        set -euo pipefail
+        source "$GITHUB_ACTION_PATH/caches.sh"
+
+        report_usage "After"
+        echo
+        echo "Caches left in scope:"
+        if [ "$SCOPE" = headroom ]; then
+          tabulate "$(all_caches)"
+        else
+          tabulate "$(in_scope "$(all_caches)" "$(resolve_refs "$REF")")"
+        fi
