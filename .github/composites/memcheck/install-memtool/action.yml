@@ -43,8 +43,6 @@ runs:
       shell: bash
       run: |
         target="$GITHUB_WORKSPACE/msvc-memcheck.cmake"
-        # Taken from beside this action, not fetched: the runner checks out the
-        # whole repository, and a URL pinned to main ignores the ref it is at.
         source_file="$GITHUB_ACTION_PATH/../../../scripts/cmake/msvc-memcheck.cmake"
         [ -f "$source_file" ] || {
           echo "No toolchain file at $source_file" >&2
