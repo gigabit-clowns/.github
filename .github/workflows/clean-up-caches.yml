@@ -6,9 +6,14 @@ on:
   workflow_call:
     inputs:
       scope:
-        description: Which caches go, "every" or "superseded".
+        description: Which caches go, "every", "superseded" or "headroom".
         required: true
         type: string
+      target_mib:
+        description: What the headroom scope frees down to.
+        required: false
+        default: 8192
+        type: number
       ref:
         description: Ref to restrict to. Every ref when left empty.
         required: false
@@ -27,6 +32,7 @@ jobs:
         GH_REPO: ${{ github.repository }}
         SCOPE: ${{ inputs.scope }}
         REF: ${{ inputs.ref }}
+        TARGET_MIB: ${{ inputs.target_mib }}
       run: |
         set -euo pipefail
 
@@ -47,9 +53,10 @@ jobs:
         list_caches() {
           if [ -n "$REF" ]; then
             gh cache list --ref "$REF" --limit 100 \
-              --json id,key,ref,sizeInBytes,createdAt
+              --json id,key,ref,sizeInBytes,createdAt,lastAccessedAt
           else
-            gh cache list --limit 100 --json id,key,ref,sizeInBytes,createdAt
+            gh cache list --limit 100 \
+              --json id,key,ref,sizeInBytes,createdAt,lastAccessedAt
           fi
         }
 
@@ -76,6 +83,23 @@ jobs:
             group_by(.ref + "|" + (.key | sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$"; "")))
             | map(sort_by(.createdAt) | .[0:-1])
             | flatten' <<<"$caches")
+        elif [ "$SCOPE" = headroom ]; then
+          # Over the ceiling GitHub evicts by last access, which takes a
+          # branch's caches first: a pull request keeps touching its own.
+          doomed=$(jq -c --argjson t "$(( TARGET_MIB * 1048576 ))" '
+            ([.[].sizeInBytes] | add // 0) as $total
+            | if $total <= $t then []
+              else
+                ([.[] | select(.ref | startswith("refs/heads/") | not)]
+                 | sort_by(.lastAccessedAt)) as $c
+                | reduce range(0; $c | length) as $i
+                    ({need: ($total - $t), out: []};
+                     if .need > 0
+                     then {need: (.need - $c[$i].sizeInBytes),
+                           out: (.out + [$c[$i]])}
+                     else . end)
+                | .out
+              end' <<<"$caches")
         else
           doomed="$caches"
         fi
