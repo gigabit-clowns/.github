@@ -1,6 +1,5 @@
 name: Clean up caches
-permissions:
-  actions: write
+permissions: {}
 
 on:
   workflow_call:
@@ -24,6 +23,8 @@ on:
 jobs:
   clean_up_caches:
     name: Delete the ${{ inputs.scope }} caches
+    permissions:
+      actions: write
     runs-on: ubuntu-latest
     steps:
     - name: Clean up caches
@@ -39,6 +40,8 @@ jobs:
     # Every event fires one scope and skips the other, and a skipped job
     # skips what needs it. This has to run either way, and after.
     if: ${{ !cancelled() }}
+    permissions:
+      actions: write
     runs-on: ubuntu-latest
     steps:
     - name: Clean up caches
