@@ -27,7 +27,7 @@ runs:
     - name: Ensure checkout
       uses: gigabit-clowns/.github/.github/composites/ensure-checkout@main
       with:
-        shallow: "false"
+        shallow: false
 
     - name: Download build artifact
       if: ${{ inputs.build-artifact-name }}

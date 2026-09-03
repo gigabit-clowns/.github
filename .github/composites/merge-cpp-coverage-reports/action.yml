@@ -20,7 +20,7 @@ inputs:
   show-coverage:
     description: "Print the merged summary to the log."
     required: false
-    default: "false"
+    default: false
 
 runs:
   using: "composite"

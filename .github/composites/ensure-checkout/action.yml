@@ -8,7 +8,7 @@ inputs:
   shallow:
     description: "Whether a shallow checkout suffices. Git blame needs full history."
     required: false
-    default: "true"
+    default: true
 
 runs:
   using: "composite"

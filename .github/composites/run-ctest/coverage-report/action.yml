@@ -17,7 +17,7 @@ inputs:
       can put the merging runner's own path back. Leave it off when the report
       is read where it was produced; on, it is unreadable until merged.
     required: false
-    default: "true"
+    default: true
   report-path:
     description: "Path to save the coverage report."
     required: false
