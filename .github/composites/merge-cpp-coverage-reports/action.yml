@@ -1,0 +1,73 @@
+name: "Merge C++ coverage reports"
+description: >
+  Merges the lcov reports a matrix leaves behind into one SonarQube report.
+  Undoes the workspace placeholder that run-ctest/coverage-report writes into
+  them, so the two belong together: merging a report that was produced with
+  normalize-paths off, or leaving one that was produced with it on unmerged,
+  gives paths that resolve to nothing and coverage that silently reads zero.
+
+inputs:
+  coverage-pattern:
+    description: "Pattern of the coverage artifacts to download."
+    required: true
+  coverage-path:
+    description: "Path the artifacts are downloaded into."
+    required: true
+  report-path:
+    description: "Where the merged report is left, matching sonar-project.properties."
+    required: false
+    default: "build/coverage.xml"
+  show-coverage:
+    description: "Print the merged summary to the log."
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    # ReportGenerator reads the sources to map the report onto them.
+    - name: Ensure checkout
+      uses: gigabit-clowns/.github/.github/composites/ensure-checkout@main
+
+    - name: Download coverage artifacts
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+      with:
+        pattern: ${{ inputs.coverage-pattern }}
+        path: ${{ inputs.coverage-path }}
+
+    - name: Put this workspace back into the paths
+      working-directory: ${{ inputs.coverage-path }}
+      shell: bash
+      run: |
+        find . -name "coverage.lcov" -type f -print0 | while IFS= read -r -d '' file; do
+          sed -i.bak "s|GITHUB_WORKSPACE|$GITHUB_WORKSPACE|g" "$file"
+          rm -f "$file.bak"
+        done
+
+    - name: Setup .NET Core # Required to execute ReportGenerator
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+      with:
+        dotnet-version: 10.x
+        dotnet-quality: 'ga'
+
+    - name: Merge coverage reports (ReportGenerator)
+      uses: danielpalme/ReportGenerator-GitHub-Action@d3ebf1f760f7d8ab92cc44d9bcfee7ad73722a31 # v5
+      with:
+        reports: ${{ inputs.coverage-path }}/${{ inputs.coverage-pattern }}/coverage.lcov
+        targetdir: ${{ github.workspace }}/merged-coverage
+        reporttypes: SonarQube;TextSummary
+        sourcedirs: ${{ github.workspace }}
+
+    - name: Move the merged report where it is read from
+      shell: bash
+      env:
+        REPORT_PATH: ${{ inputs.report-path }}
+      run: |
+        mkdir -p "$(dirname "$REPORT_PATH")"
+        mv "$GITHUB_WORKSPACE/merged-coverage/SonarQube.xml" "$REPORT_PATH"
+        echo "Merged report at $REPORT_PATH"
+
+    - name: Show the merged report
+      if: ${{ inputs.show-coverage == 'true' }}
+      shell: bash
+      run: cat "$GITHUB_WORKSPACE/merged-coverage/Summary.txt"

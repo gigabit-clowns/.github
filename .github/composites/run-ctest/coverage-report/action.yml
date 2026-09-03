@@ -11,6 +11,13 @@ inputs:
   cl-coverage-tool:
     description: "Path to the coverage tool used by Windows with MSVC."
     required: false
+  normalize-paths:
+    description: >
+      Replace this workspace with a placeholder, so merge-cpp-coverage-reports
+      can put the merging runner's own path back. Leave it off when the report
+      is read where it was produced; on, it is unreadable until merged.
+    required: false
+    default: "true"
   report-path:
     description: "Path to save the coverage report."
     required: false
@@ -64,7 +71,9 @@ runs:
           --cover_children --
 
     - name: Normalize report paths (all but MSVC)
-      if: inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
+      if: >-
+        inputs.normalize-paths == 'true' &&
+        inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
       shell: bash
       env:
         REPORT_PATH: ${{ inputs.report-path }}
@@ -75,7 +84,9 @@ runs:
         rm -f "$REPORT_PATH.bak"
 
     - name: Normalize report paths (Windows with MSVC)
-      if: inputs.compiler-c == 'cl' && inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
+      if: >-
+        inputs.normalize-paths == 'true' && inputs.compiler-c == 'cl' &&
+        inputs.compiler-cxx == 'cl' && inputs.cl-coverage-tool != ''
       shell: bash
       env:
         REPORT_PATH: ${{ inputs.report-path }}

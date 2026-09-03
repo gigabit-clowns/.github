@@ -1,106 +1,54 @@
 name: "SonarQube scan"
-description: "Runs SonarQube scan."
+description: >
+  Runs a SonarQube scan. Coverage is whatever the workspace already holds when
+  this runs, either merged into place by a composite earlier in the job or
+  downloaded here by name; each repository's sonar-project.properties says where
+  the scanner looks for it.
 
 inputs:
   sonar-token:
     description: "SonarQube token"
     required: true
   build-artifact-name:
-    description: "Name of the build artifact to download."
-    required: true
-  coverage-pattern:
-    description: "Pattern of the artifact/s to download."
+    description: "Artifact holding what the scanner reads, such as compile_commands.json."
+    required: false
+  coverage-artifact-name:
+    description: "Coverage artifact to download. Left out, whatever is local is used."
     required: false
   coverage-path:
-    description: "Path where the artifact/s will be downloaded."
+    description: "Path the coverage artifact is downloaded into."
     required: false
-  show-coverage:
-    description: "If set to true, merged report path is both uploaded and shown in the terminal."
-    required: false
-    default: false
+    default: "."
 
 runs:
   using: "composite"
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+    # Full history, which git blame needs to attribute new code.
+    - name: Ensure checkout
+      uses: gigabit-clowns/.github/.github/composites/ensure-checkout@main
       with:
-        fetch-depth: 0 # Needed to get git blame information for SonarQube
+        shallow: "false"
 
-    # Build artifact needed for manual scan
     - name: Download build artifact
+      if: ${{ inputs.build-artifact-name }}
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: ${{ inputs.build-artifact-name }}
         path: ${{ github.workspace }}/build
 
-    #### Coverage report section start ####
-    - name: Download coverage artifacts
+    - name: Download coverage artifact
+      if: ${{ inputs.coverage-artifact-name }}
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-      if: ${{ inputs.coverage-pattern && inputs.coverage-path }}
       with:
-        pattern: ${{ inputs.coverage-pattern }}
+        name: ${{ inputs.coverage-artifact-name }}
         path: ${{ inputs.coverage-path }}
 
-    - name: Substitute placeholder with current workspace
-      if: ${{ inputs.coverage-pattern && inputs.coverage-path }}
-      working-directory: "${{ github.workspace }}/build"
-      shell: bash
-      run: |
-        # Find all coverage.lcov files and replace placeholder with actual workspace path
-        find . -name "coverage.lcov" -type f -print0 | while IFS= read -r -d '' file; do
-          sed -i.bak "s|GITHUB_WORKSPACE|$GITHUB_WORKSPACE|g" "$file"
-          rm -f "$file.bak"
-        done
-
-    - name: Setup .NET Core # Required to execute ReportGenerator
-      if: ${{ inputs.coverage-pattern && inputs.coverage-path }}
-      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
-      with:
-        dotnet-version: 10.x
-        dotnet-quality: 'ga'
-
-    - name: Merge coverage reports (ReportGenerator)
-      if: ${{ inputs.coverage-pattern && inputs.coverage-path }}
-      uses: danielpalme/ReportGenerator-GitHub-Action@d3ebf1f760f7d8ab92cc44d9bcfee7ad73722a31 # v5
-      with:
-        reports: ${{ inputs.coverage-path }}/${{ inputs.coverage-pattern }}/coverage.lcov
-        targetdir: build
-        reporttypes: SonarQube;TextSummary
-        sourcedirs: ${{ github.workspace }}
-
-    - name: Rename merged coverage report
-      if: ${{ inputs.coverage-pattern && inputs.coverage-path }}
-      shell: bash
-      run: mv ./build/SonarQube.xml ./build/coverage.xml
-
-    - name: Upload merged coverage report # For debugging purposes
-      if: ${{ inputs.show-coverage == 'true' }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-      with:
-        name: merged-coverage-report
-        path: build/coverage.xml
-
-    - name: Show merged coverage report # For debugging purposes
-      if: ${{ inputs.show-coverage == 'true' }}
-      shell: bash
-      run: cat build/Summary.txt
-    #### Coverage report section end ####
-
-    # Regular scan for most events
-    - name: SonarQube scan for most events
-      if: ${{ github.event_name != 'workflow_dispatch' }}
+    - name: SonarQube scan
       uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8
       env:
         SONAR_TOKEN: ${{ inputs.sonar-token }}
-
-    # When trigger event is workflow_dispatch, SonarQube action
-    # will always treat it as main branch unless we specify the branch name
-    - name: SonarQube scan for workflow_dispatch
-      if: ${{ github.event_name == 'workflow_dispatch' }}
-      uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8
-      env:
-          SONAR_TOKEN: ${{ inputs.sonar-token }}
       with:
-        args: >
-          -Dsonar.branch.name=${{ github.ref_name }}
+        # A dispatched run is read as main unless the branch is named.
+        args: >-
+          ${{ github.event_name == 'workflow_dispatch'
+              && format('-Dsonar.branch.name={0}', github.ref_name) || '' }}
