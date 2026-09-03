@@ -20,24 +20,24 @@ runs:
         # .git rather than rev-parse, which would find a repository further up.
         if [ ! -d "$GITHUB_WORKSPACE/.git" ]; then
           echo "No repository in the workspace."
-          echo "checkout=true" >> "$GITHUB_OUTPUT"
+          echo "needs-checkout=true" >> "$GITHUB_OUTPUT"
           exit 0
         fi
-        shallow=$(git -C "$GITHUB_WORKSPACE" rev-parse --is-shallow-repository)
-        echo "Repository present, shallow=$shallow."
-        echo "checkout=false" >> "$GITHUB_OUTPUT"
-        echo "shallow=$shallow" >> "$GITHUB_OUTPUT"
+        is-shallow=$(git -C "$GITHUB_WORKSPACE" rev-parse --is-shallow-repository)
+        echo "Repository present, is-shallow=$is-shallow."
+        echo "needs-checkout=false" >> "$GITHUB_OUTPUT"
+        echo "is-shallow=$is-shallow" >> "$GITHUB_OUTPUT"
 
     - name: Check out the repository
-      if: steps.state.outputs.checkout == 'true'
+      if: steps.state.outputs.needs-checkout == 'true'
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
         fetch-depth: ${{ inputs.shallow == 'true' && 1 || 0 }}
 
     - name: Fetch the rest of the history
       if: >-
-        steps.state.outputs.checkout == 'false' &&
+        steps.state.outputs.needs-checkout == 'false' &&
         inputs.shallow != 'true' &&
-        steps.state.outputs.shallow == 'true'
+        steps.state.outputs.is-shallow == 'true'
       shell: bash
       run: git -C "$GITHUB_WORKSPACE" fetch --unshallow
