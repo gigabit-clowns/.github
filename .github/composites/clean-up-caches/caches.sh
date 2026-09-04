@@ -64,11 +64,15 @@ tabulate() {
 }
 
 # A cache cannot be overwritten, so each run leaves a new entry behind and
-# only the newest of each prefix is ever restored. The key carries the
-# timestamp that makes it unique, so grouping strips it.
+# only the newest of each prefix is ever restored. Grouping strips the tail
+# that makes a key unique: a timestamp, a commit SHA or a run id.
 select_superseded() {
 	jq -c '
-		group_by(.ref + "|" + (.key | sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$"; "")))
+		def stem:
+			sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$"; "")
+			| sub("-[0-9a-f]{40}$"; "")
+			| sub("-[0-9]{6,}$"; "");
+		group_by(.ref + "|" + (.key | stem))
 		| map(sort_by(.createdAt) | .[0:-1])
 		| flatten' <<<"$1"
 }
