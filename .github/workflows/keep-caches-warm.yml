@@ -1,0 +1,32 @@
+name: Keep caches warm
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      entries:
+        description: >-
+          What to touch, as JSON: a list of {os, prefix}. An entry adds path
+          when its cache lives outside the workspace.
+        required: true
+        type: string
+
+jobs:
+  touch:
+    name: Touch ${{ matrix.prefix }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.entries) }}
+    steps:
+      # A lookup registers the read the seven-day expiry counts, and downloads
+      # nothing. The version an entry is addressed through hashes the path as
+      # written, so the separator is the runner's own.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ matrix.path || (runner.os == 'Windows' && format('{0}\.ccache', github.workspace) || format('{0}/.ccache', github.workspace)) }}
+          key: ${{ matrix.prefix }}-none
+          restore-keys: ${{ matrix.prefix }}-
+          lookup-only: true
