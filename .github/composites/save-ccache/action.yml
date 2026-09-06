@@ -1,0 +1,25 @@
+name: Save the compiler cache
+description: Drop what this job did not compile, then store the rest.
+
+inputs:
+  key:
+    description: The key restore-ccache was given.
+    required: true
+
+runs:
+  using: composite
+  steps:
+  - name: Drop what this job did not use
+    shell: bash
+    run: |
+      if [ -z "${CCACHE_RESTORED_AT:-}" ]; then
+        echo "restore-ccache did not run in this job" >&2
+        exit 1
+      fi
+      ccache --evict-older-than "$(( $(date -u +%s) - CCACHE_RESTORED_AT ))s"
+
+  # The path is hashed as written, so it carries the runner's own separator.
+  - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+    with:
+      path: ${{ runner.os == 'Windows' && format('{0}\.ccache', github.workspace) || format('{0}/.ccache', github.workspace) }}
+      key: ccache-${{ inputs.key }}-${{ github.run_id }}

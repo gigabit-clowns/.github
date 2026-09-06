@@ -1,0 +1,25 @@
+name: Restore the compiler cache
+description: Install ccache, restore what main last wrote, and leave the save to save-ccache.
+
+inputs:
+  key:
+    description: Cache key, without the ccache- prefix the action adds.
+    required: true
+  max-size:
+    description: Ceiling ccache evicts against.
+    required: false
+    default: 1G
+
+runs:
+  using: composite
+  steps:
+  - uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 # v1.2.23
+    with:
+      key: ${{ inputs.key }}
+      max-size: ${{ inputs.max-size }}
+      save: false
+
+  # What save-ccache evicts against.
+  - name: Note when the cache was restored
+    shell: bash
+    run: echo "CCACHE_RESTORED_AT=$(date -u +%s)" >> "$GITHUB_ENV"
