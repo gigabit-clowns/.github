@@ -24,9 +24,15 @@ runs:
     shell: bash
     run: echo "CCACHE_RESTORED_AT=$(date -u +%s)" >> "$GITHUB_ENV"
 
-  - name: Show what this runner is
+  - name: Show what the hits will depend on
     shell: bash
     run: |
-      echo "image   ${ImageOS:-unknown} ${ImageVersion:-unknown}"
-      echo "runner  $RUNNER_OS $RUNNER_ARCH"
+      echo "image    ${ImageOS:-unknown} ${ImageVersion:-unknown}"
+      echo "runner   $RUNNER_OS $RUNNER_ARCH"
       ccache --version | head -1
+      # compiler_check says what of the compiler enters the hash.
+      ccache -p | grep -E '(base_dir|cache_dir|compiler_check|hash_dir|max_size|namespace|sloppiness) *=' || true
+      for c in cc c++ gcc g++ clang++ cl; do
+        command -v "$c" > /dev/null 2>&1 || continue
+        echo "$c: $("$c" --version 2>&1 | head -1 || true)"
+      done
