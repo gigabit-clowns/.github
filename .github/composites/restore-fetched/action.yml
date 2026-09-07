@@ -1,0 +1,31 @@
+name: Restore the fetched sources
+description: Restore the dependency sources main last downloaded, and leave the save to save-fetched.
+
+inputs:
+  key:
+    description: Cache key, without the prefix and the platform the action adds.
+    required: true
+
+outputs:
+  dir:
+    description: Where the sources live. Give it to CMake as FETCHCONTENT_BASE_DIR.
+    value: ${{ runner.os == 'Windows' && 'C:/fetched' || '/tmp/fetched' }}
+
+runs:
+  using: composite
+  steps:
+  # The archives are the same everywhere, so only the path splits them.
+  - id: restore
+    uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+    with:
+      path: ${{ runner.os == 'Windows' && 'C:/fetched' || '/tmp/fetched' }}
+      key: fetched-${{ runner.os == 'Windows' && 'windows' || 'unix' }}-${{ inputs.key }}
+
+  # What save-fetched stores under, and skips on.
+  - name: Note what was restored
+    shell: bash
+    run: |
+      {
+        echo "FETCHED_KEY=fetched-${{ runner.os == 'Windows' && 'windows' || 'unix' }}-${{ inputs.key }}"
+        echo "FETCHED_HIT=${{ steps.restore.outputs.cache-hit }}"
+      } >> "$GITHUB_ENV"
