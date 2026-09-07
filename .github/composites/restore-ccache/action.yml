@@ -23,3 +23,10 @@ runs:
   - name: Note when the cache was restored
     shell: bash
     run: echo "CCACHE_RESTORED_AT=$(date -u +%s)" >> "$GITHUB_ENV"
+
+  - name: Show what this runner is
+    shell: bash
+    run: |
+      echo "image   ${ImageOS:-unknown} ${ImageVersion:-unknown}"
+      echo "runner  $RUNNER_OS $RUNNER_ARCH"
+      ccache --version | head -1
