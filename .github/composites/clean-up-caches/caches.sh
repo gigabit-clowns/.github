@@ -65,11 +65,16 @@ tabulate() {
 
 # A cache cannot be overwritten, so each run leaves a new entry behind and
 # only the newest of each prefix is ever restored. Grouping strips the tail
-# that makes a key unique: a timestamp, a commit SHA or a run id.
+# that makes a key unique: a timestamp, a commit SHA or a run id. A content
+# hash only counts as one under "fetched-", where the newest is the version
+# the repository has moved to.
 select_superseded() {
 	jq -c '
 		def stem:
-			sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$"; "")
+			(if startswith("fetched-")
+			 then sub("-[0-9a-f]{64}$"; "")
+			 else . end)
+			| sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$"; "")
 			| sub("-[0-9a-f]{40}$"; "")
 			| sub("-[0-9]{6,}$"; "");
 		group_by(.ref + "|" + (.key | stem))
