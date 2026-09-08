@@ -24,8 +24,16 @@ runs:
   # What save-fetched stores under, and skips on.
   - name: Note what was restored
     shell: bash
+    env:
+      KEY: fetched-${{ runner.os == 'Windows' && 'windows' || 'unix' }}-${{ inputs.key }}
+      HIT: ${{ steps.restore.outputs.cache-hit }}
     run: |
       {
-        echo "FETCHED_KEY=fetched-${{ runner.os == 'Windows' && 'windows' || 'unix' }}-${{ inputs.key }}"
-        echo "FETCHED_HIT=${{ steps.restore.outputs.cache-hit }}"
+        echo "FETCHED_KEY=$KEY"
+        echo "FETCHED_HIT=$HIT"
       } >> "$GITHUB_ENV"
+      if [ "$HIT" = "true" ]; then
+        echo "Restored $KEY"
+      else
+        echo "Nothing was restored for $KEY"
+      fi

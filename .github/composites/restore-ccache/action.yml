@@ -22,7 +22,11 @@ runs:
   # What save-ccache evicts against.
   - name: Note when the cache was restored
     shell: bash
-    run: echo "CCACHE_RESTORED_AT=$(date -u +%s)" >> "$GITHUB_ENV"
+    run: |
+      # One call, so the two forms cannot disagree.
+      restored=$(date -u '+%s %Y-%m-%dT%H:%M:%SZ')
+      echo "CCACHE_RESTORED_AT=${restored%% *}" >> "$GITHUB_ENV"
+      echo "Restored at ${restored#* }"
 
   - name: Show what the hits will depend on
     shell: bash
