@@ -5,6 +5,10 @@ inputs:
   key:
     description: Cache key, without the prefix and the platform the action adds.
     required: true
+  variant:
+    description: Name that keeps this cache in its own namespace, ahead of the platform.
+    required: false
+    default: ''
 
 outputs:
   dir:
@@ -20,13 +24,13 @@ runs:
       path: |
         ${{ runner.os == 'Windows' && 'C:/fetched' || '/tmp/fetched' }}
         !${{ runner.os == 'Windows' && 'C:/fetched' || '/tmp/fetched' }}/*-build
-      key: fetched-${{ runner.os }}-${{ inputs.key }}
+      key: fetched-${{ inputs.variant && format('{0}-', inputs.variant) || '' }}${{ runner.os }}-${{ inputs.key }}
 
   # What save-fetched stores under, and skips on.
   - name: Note what was restored
     shell: bash
     env:
-      KEY: fetched-${{ runner.os }}-${{ inputs.key }}
+      KEY: fetched-${{ inputs.variant && format('{0}-', inputs.variant) || '' }}${{ runner.os }}-${{ inputs.key }}
       HIT: ${{ steps.restore.outputs.cache-hit }}
     run: |
       {
