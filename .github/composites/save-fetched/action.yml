@@ -15,5 +15,7 @@ runs:
   - if: env.FETCHED_HIT != 'true'
     uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
     with:
-      path: ${{ runner.os == 'Windows' && 'C:/fetched' || '/tmp/fetched' }}
+      path: |
+        ${{ runner.os == 'Windows' && 'C:/fetched' || '/tmp/fetched' }}
+        !${{ runner.os == 'Windows' && 'C:/fetched' || '/tmp/fetched' }}/*-build
       key: ${{ env.FETCHED_KEY }}
