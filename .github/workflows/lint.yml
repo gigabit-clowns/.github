@@ -38,10 +38,8 @@ jobs:
 
       - name: Install the linters
         run: |
-          pip install --only-binary :all: \
-            ruff==0.16.8 \
-            yamllint==1.38.0 \
-            check-jsonschema==0.38.0
+          pip install --only-binary :all: --require-hashes \
+            -r .github/requirements-lint.txt
 
       - name: Check that every YAML file parses
         run: yamllint --strict .

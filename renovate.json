@@ -6,6 +6,9 @@
   ],
   "minimumReleaseAge": "14 days",
   "internalChecksFilter": "strict",
+  "pip-compile": {
+    "managerFilePatterns": ["/^\\.github/requirements-lint\\.txt$/"]
+  },
   "packageRules": [
     {
       "description": "Security advisories bypass the 14-day delay",
@@ -15,6 +18,12 @@
     {
       "description": "Avoid internal call SHAs infinite update loop",
       "matchDepNames": ["gigabit-clowns/.github"],
+      "enabled": false
+    },
+    {
+      "description": "pip-compile owns the lock. pip_requirements claims it too by name, and would raise the pin while leaving the hash it no longer matches",
+      "matchManagers": ["pip_requirements"],
+      "matchFileNames": [".github/requirements-lint.txt"],
       "enabled": false
     }
   ],

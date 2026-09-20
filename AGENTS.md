@@ -37,6 +37,8 @@ bumps.
 | `.github/composites/` | The composite actions, one directory per action |
 | `.github/composites/*/`*`.sh` | Shell that an action sources rather than inlines |
 | `.github/scripts/` | Files an action copies into the caller's workspace |
+| `.github/requirements-lint.in` | The linters `lint.yml` installs, and the only half of the pair that is edited |
+| `.github/requirements-lint.txt` | Generated from it, hashes and all |
 | `conf/` | Linter configuration that is not read from the repository root |
 | `.yamllint.yml` | yamllint's configuration, which it only finds at the root |
 
@@ -160,12 +162,40 @@ published action schema instead. Nothing else in the job reads a composite as
 YAML, which is why `yamllint` runs first: a file that does not parse at all
 reads to every later step as an empty one.
 
-Every version this repository installs is pinned, so that a release of
-something else cannot turn `main` red on its own. The linters are named with
-`==` in the step that installs them rather than in a requirements file, and
-gcovr the same way in `install-cpp-coverage-tool`. No manager reads a version
-out of a `run:` block, so `renovate.json` carries a `customManagers` entry
-that does, matching `name==version` in a workflow or an `action.yml`.
+Every version this repository installs is pinned down to the hash, so that a
+release of something else cannot turn `main` red on its own and so that a
+package cannot change under a version that has already been resolved.
+
+`.github/requirements-lint.in` holds the three linters and is the only one of
+the pair that is edited. `.github/requirements-lint.txt` is generated from it
+and is never touched by hand:
+
+```bash
+cd .github
+uv pip compile --universal --generate-hashes --python-version 3.14 \
+  --output-file requirements-lint.txt requirements-lint.in
+```
+
+Renovate keeps it current through its `pip-compile` manager, which reads the
+header of the generated file, reconstructs that same command and runs it, so
+the hashes are regenerated rather than left behind a raised pin. Three things
+follow from that and none of them are optional:
+
+- The header stays. `--no-header` is the one option the manager refuses,
+  because the header is where the command comes from.
+- `pip_requirements` claims `requirements-lint.txt` too, by name, and would
+  raise the pin while leaving the hash it no longer matches. `renovate.json`
+  turns it off for that one path, not everywhere, so a requirements file added
+  later is still picked up.
+- The compile runs from `.github`, so the header names both files without a
+  directory. Renovate infers where the command ran from the output path, and
+  looks for the source beside it.
+
+gcovr is pinned inline in `install-cpp-coverage-tool` instead. It installs on
+the caller's runner across four platforms, which is more than one resolution
+covers. No manager reads a version out of a `run:` block, so `renovate.json`
+carries a `customManagers` entry that does.
+
 actionlint is pinned by tag and digest together, and Renovate reads the tag.
 
 `--only-binary :all:` goes on every `pip install` here. Building a source
