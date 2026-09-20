@@ -66,4 +66,3 @@ runs:
       run: |
         $path = 'C:\Program Files (x86)\Dr. Memory\bin64\drmemory.exe'
         Add-Content -Path $env:GITHUB_OUTPUT -Value "drmemory=$path"
-

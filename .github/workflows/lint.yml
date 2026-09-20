@@ -1,0 +1,64 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - LICENSE
+      - '**.md'
+      - .vscode/**
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.14'
+
+      - name: Install the linters
+        run: pip install -r .github/requirements-lint.txt
+
+      - name: Check that every YAML file parses
+        run: yamllint --strict .
+
+      - name: Check the workflows
+        uses: docker://rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+        with:
+          args: -color
+
+      - name: Check the composite actions
+        run: >-
+          git ls-files -z '.github/composites/**/action.yml'
+          | xargs -0 -r check-jsonschema --builtin-schema vendor.github-actions
+
+      - name: Check renovate.json
+        run: check-jsonschema --builtin-schema vendor.renovate renovate.json
+
+      - name: Check the shell scripts
+        run: >-
+          git ls-files -z '*.sh'
+          | xargs -0 -r shellcheck --shell=bash --severity=style
+
+      - name: Check the Python scripts
+        run: ruff check --no-cache --config conf/ruff.toml .

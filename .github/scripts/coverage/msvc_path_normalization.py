@@ -1,3 +1,9 @@
+"""Replace this workspace's path with a placeholder throughout a Cobertura report.
+
+Rewrites the <source> element, every <package> name and every <class>
+filename, in place unless --output names somewhere else.
+"""
+
 import argparse
 import os
 import sys

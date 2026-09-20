@@ -46,7 +46,7 @@ runs:
       run: |
         brew install llvm
         ln -s "$(brew --prefix llvm)/bin/llvm-cov" /usr/local/bin/llvm-cov || true
-    
+
     - name: Install gcovr (gcc & clang)
       if: inputs.compiler-c != 'cl' && inputs.compiler-cxx != 'cl'
       shell: bash
@@ -67,6 +67,3 @@ runs:
       run: |
         $path = 'C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe'
         Add-Content -Path $env:GITHUB_OUTPUT -Value "opencppcoverage=$path"
-
-
-

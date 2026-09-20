@@ -22,7 +22,7 @@ runs:
         TEST_EXTRA_PARAMS: ${{ inputs.test-extra-params }}
       run: |
         echo "test-wrapper=$TEST_WRAPPER" >> $GITHUB_OUTPUT
-        echo "test-extra-params=$TEST_EXTRA_PARAMS" >> $GITHUB_OUTPUT 
+        echo "test-extra-params=$TEST_EXTRA_PARAMS" >> $GITHUB_OUTPUT
 
     - name: Run tests without memory check
       working-directory: "${{ github.workspace }}/build"
