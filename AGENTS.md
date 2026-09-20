@@ -153,8 +153,12 @@ Actions are pinned by digest everywhere, under a 14-day minimum release age
 that security advisories skip. The `# v7` after a digest is not decoration —
 Renovate reads it — so it stays.
 
-There is no CodeQL scan of this repository, although the sibling repositories
-run one over their `.github/` directory. It is a known gap.
+CodeQL scans this repository for the `actions` language, on every push and
+weekly, and that is why there is no workflow here for it: it is configured
+through GitHub's default setup rather than committed as a file, unlike the
+sibling repositories, which each carry a `codeql-actions.yml` of their own.
+`gh api repos/gigabit-clowns/.github/code-scanning/default-setup` is where to
+read the current configuration.
 
 ## Code conventions
 
