@@ -19,18 +19,21 @@ jobs:
     - name: Retrieve tag name
       id: tag_name
       run: |
-        export TAG_NAME=v$(cat VERSION)
-        echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-        echo "Version: $TAG_NAME"
+        tag_name="v$(cat VERSION)"
+        echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
+        echo "Version: $tag_name"
 
     - name: Retrieve changelog
       id: changelog
       run: |
-        export CHANGELOG_BODY=$(awk '/# /{if (found) exit} {if (/# /) found=1; else if (found) print}' CHANGELOG.md)
-        echo "changelog<<EOF" >> $GITHUB_OUTPUT
-        echo "$changelog" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-        echo "Changelog: $CHANGELOG_BODY"
+        changelog=$(awk '/# /{if (found) exit} {if (/# /) found=1; else if (found) print}' CHANGELOG.md)
+        delimiter="EOF_$(openssl rand -hex 16)"
+        {
+          echo "changelog<<$delimiter"
+          echo "$changelog"
+          echo "$delimiter"
+        } >> "$GITHUB_OUTPUT"
+        echo "Changelog: $changelog"
     
     - name: Generate GitHub App Token
       id: generate_token
