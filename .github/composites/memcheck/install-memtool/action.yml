@@ -5,7 +5,7 @@ inputs:
   only-export-path:
     description: "If set, no tool will be installed, only relevant paths will be exported without modification."
     required: false
-    default: false
+    default: "false"
 outputs:
   drmemory-bash:
     description: "Full path to Dr. Memory (in bash format)."

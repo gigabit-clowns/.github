@@ -5,7 +5,7 @@ inputs:
   check-memleaks:
     description: "If set to true, test will be run checking for memory leaks."
     required: false
-    default: false
+    default: "false"
   test-wrapper:
     description: "Wrapper command to run tests (e.g. OpenCppCoverage). Will be ignored if used with check-memleak."
     required: false
