@@ -6,7 +6,7 @@ on:
     inputs:
       scope:
         # workflow_call has no choice type; the caller's dispatch has one.
-        description: Which caches go, "every" or "all".
+        description: Which caches go, "superseded" or "all".
         required: true
         type: string
       ref:
