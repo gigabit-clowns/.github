@@ -23,7 +23,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # Full history, which git blame needs to attribute new code.
     - name: Ensure checkout
       uses: gigabit-clowns/.github/.github/composites/ensure-checkout@main
       with:
@@ -48,7 +47,6 @@ runs:
       env:
         SONAR_TOKEN: ${{ inputs.sonar-token }}
       with:
-        # A dispatched run is read as main unless the branch is named.
         args: >-
           ${{ github.event_name == 'workflow_dispatch'
               && format('-Dsonar.branch.name={0}', github.ref_name) || '' }}

@@ -19,11 +19,9 @@ runs:
       max-size: ${{ inputs.max-size }}
       save: false
 
-  # What save-ccache evicts against.
   - name: Note when the cache was restored
     shell: bash
     run: |
-      # One call, so the two forms cannot disagree.
       restored=$(date -u '+%s %Y-%m-%dT%H:%M:%SZ')
       echo "CCACHE_RESTORED_AT=${restored%% *}" >> "$GITHUB_ENV"
       echo "Restored at ${restored#* }"
@@ -34,7 +32,6 @@ runs:
       echo "image    ${ImageOS:-unknown} ${ImageVersion:-unknown}"
       echo "runner   $RUNNER_OS $RUNNER_ARCH"
       ccache --version | head -1
-      # compiler_check says what of the compiler enters the hash.
       ccache -p | grep -E '(base_dir|cache_dir|compiler_check|hash_dir|max_size|namespace|sloppiness) *=' || true
       for c in cc c++ gcc g++ clang++ cl; do
         command -v "$c" > /dev/null 2>&1 || continue

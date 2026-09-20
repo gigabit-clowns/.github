@@ -8,7 +8,6 @@ runs:
     shell: pwsh
     run: |
       $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-      # vcvars64 targets x64 even on an ARM64 runner, where it cross compiles.
       $arm = $env:RUNNER_ARCH -eq 'ARM64'
       $tools = if ($arm) { 'ARM64' } else { 'x86.x64' }
       $script = if ($arm) { 'vcvarsarm64.bat' } else { 'vcvars64.bat' }

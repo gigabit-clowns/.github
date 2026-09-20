@@ -1,15 +1,7 @@
-# Helpers shared by the steps of the clean-up-caches action.
-#
-# Sourced rather than executed, so that every step reports in the same
-# shape without repeating it. gh reads GH_TOKEN and GH_REPO from the
-# environment.
+# Helpers sourced by the steps of the clean-up-caches action.
 
-# GitHub reports what is in use but never the ceiling.
 CACHE_LIMIT_MIB=10240
 
-# Summed from the listing rather than read from actions/cache/usage. That
-# endpoint lags by minutes, and this runs right after a build, so it would
-# report the state from before the run that triggered it.
 report_usage() {
 	local all used_mib count
 	all=$(all_caches)
@@ -25,8 +17,6 @@ all_caches() {
 		--json id,key,ref,sizeInBytes,createdAt,lastAccessedAt
 }
 
-# A branch also owns whatever a pull request opened from it left behind, and
-# the dispatch ref picker can name the branch but never that ref.
 resolve_refs() {
 	local ref="$1" branch out n
 	[ -z "$ref" ] && return 0
@@ -45,7 +35,6 @@ resolve_refs() {
 	printf '%s\n' "$out"
 }
 
-# Every cache when no ref resolves.
 in_scope() {
 	local caches="$1" refs="$2"
 	if [ -z "$refs" ]; then
@@ -63,11 +52,6 @@ tabulate() {
 	       end' <<<"$1" | column -t -s "$(printf '\t')"
 }
 
-# A cache cannot be overwritten, so each run leaves a new entry behind and
-# only the newest of each prefix is ever restored. Grouping strips the tail
-# that makes a key unique: a timestamp, a commit SHA or a run id. A content
-# hash only counts as one under "fetched-", where the newest is the version
-# the repository has moved to.
 select_superseded() {
 	jq -c '
 		def stem:
@@ -82,10 +66,6 @@ select_superseded() {
 		| flatten' <<<"$1"
 }
 
-# Refs the repository still has. A merged pull request's merge ref is deleted
-# with it, so a cache left on one can never be restored again.
-# An empty answer would mark every cache dead, so a failure here stops the
-# run rather than reading as "no ref exists".
 live_refs() {
 	local refs
 	refs=$(git ls-remote "https://x-access-token:$GH_TOKEN@github.com/$GH_REPO" \
@@ -107,8 +87,6 @@ without() {
 		'[.[] | select(.id as $i | $gone | map(.id) | index($i) | not)]' <<<"$1"
 }
 
-# Over the ceiling GitHub evicts by last access, which takes a branch's
-# caches first: a pull request keeps touching its own, a branch does not.
 select_headroom() {
 	jq -c --argjson t "$(( $2 * 1048576 ))" '
 		([.[].sizeInBytes] | add // 0) as $total

@@ -26,7 +26,6 @@ runs:
         !${{ runner.os == 'Windows' && 'C:/fetched' || '/tmp/fetched' }}/*-build
       key: fetched-${{ inputs.variant && format('{0}-', inputs.variant) || '' }}${{ runner.os }}-${{ inputs.key }}
 
-  # What save-fetched stores under, and skips on.
   - name: Note what was restored
     shell: bash
     env:

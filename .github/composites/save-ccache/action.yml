@@ -18,7 +18,6 @@ runs:
       fi
       ccache --evict-older-than "$(( $(date -u +%s) - CCACHE_RESTORED_AT ))s"
 
-  # The path is hashed as written, so it carries the runner's own separator.
   - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
     with:
       path: ${{ runner.os == 'Windows' && format('{0}\.ccache', github.workspace) || format('{0}/.ccache', github.workspace) }}

@@ -44,15 +44,12 @@ runs:
       id: check-memleaks
       shell: bash
       run: |
-        # Check if there are any memory leaks
         export EXIST_MEMLEAKS='false'
         if [ -f "memcheck_output.txt" ]; then
-          # Find the line number of "Memory checking results:"
           memory_check_results_line=$(grep -n "Memory checking results:" "memcheck_output.txt" | cut -d: -f1)
           if [ -z "$memory_check_results_line" ]; then
             echo "Line with content 'Memory checking results:' not found."
           else
-            # Check if there are any lines after "Memory checking results:"
             output_after_results=$(tail -n +$((memory_check_results_line + 1)) "memcheck_output.txt")
             if [ -z "$output_after_results" ]; then
               echo "There are no memory leaks. Congrats!"

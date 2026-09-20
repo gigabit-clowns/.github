@@ -5,7 +5,6 @@ on:
   workflow_call:
     inputs:
       scope:
-        # workflow_call has no choice type; the caller's dispatch has one.
         description: Which caches go, "superseded" or "all".
         required: true
         type: string
@@ -37,8 +36,6 @@ jobs:
   headroom:
     name: Free space if the repository is over its target
     needs: [clean_up_caches]
-    # Every event fires one scope and skips the other, and a skipped job
-    # skips what needs it. This has to run either way, and after.
     if: ${{ !cancelled() }}
     permissions:
       actions: write

@@ -78,7 +78,6 @@ runs:
       env:
         REPORT_PATH: ${{ inputs.report-path }}
       run: |
-        # Replace workspace with placeholder for later unification
         ws=$(echo "$GITHUB_WORKSPACE" | sed 's|\\|/|g')
         sed -i.bak "s|$ws|GITHUB_WORKSPACE|g" "$REPORT_PATH"
         rm -f "$REPORT_PATH.bak"
