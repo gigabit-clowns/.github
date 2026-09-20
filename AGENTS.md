@@ -172,9 +172,13 @@ and is never touched by hand:
 
 ```bash
 cd .github
-uv pip compile --universal --generate-hashes --python-version 3.14 \
-  --output-file requirements-lint.txt requirements-lint.in
+uv pip compile --universal --generate-hashes --python-version=3.14 \
+  --output-file=requirements-lint.txt requirements-lint.in
 ```
+
+The equals signs are load-bearing. Renovate reads that command back out of the
+header and refuses any option that carries its argument after a space, so a
+lock compiled with `--python-version 3.14` is one it cannot parse at all.
 
 Renovate keeps it current through its `pip-compile` manager, which reads the
 header of the generated file, reconstructs that same command and runs it, so
