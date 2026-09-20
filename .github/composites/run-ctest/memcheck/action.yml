@@ -42,7 +42,6 @@ runs:
 
     - name: Check if there are any memory leaks
       id: check-memleaks
-      if: inputs.check-memleaks == 'true'
       shell: bash
       run: |
         # Check if there are any memory leaks
@@ -68,7 +67,6 @@ runs:
         echo "exist-memleaks=$EXIST_MEMLEAKS" >> "$GITHUB_OUTPUT"
 
     - name: Get number of tests with memory leaks
-      if: inputs.check-memleaks == 'true'
       id: get-memleak-tests
       shell: bash
       run: |

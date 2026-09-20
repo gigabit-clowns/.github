@@ -22,4 +22,4 @@ runs:
           cat MemoryChecker.$number.log
           echo -e "\n\n"
         done
-        exit false
+        exit 1

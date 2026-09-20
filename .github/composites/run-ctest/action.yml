@@ -20,7 +20,7 @@ outputs:
     value: ${{ steps.run-with-memcheck.outputs.exist-memleaks }}
   memleak-test-numbers:
     description: "Numbers of the tests with memory leaks." 
-    value: ${{ steps.run-with-memcheck.outputs.test-numbers }}
+    value: ${{ steps.run-with-memcheck.outputs.memleak-test-numbers }}
 
 runs:
   using: "composite"
