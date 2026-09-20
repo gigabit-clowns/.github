@@ -37,7 +37,6 @@ bumps.
 | `.github/composites/` | The composite actions, one directory per action |
 | `.github/composites/*/`*`.sh` | Shell that an action sources rather than inlines |
 | `.github/scripts/` | Files an action copies into the caller's workspace |
-| `.github/requirements-lint.txt` | The pinned linters `lint.yml` installs |
 | `conf/` | Linter configuration that is not read from the repository root |
 | `.yamllint.yml` | yamllint's configuration, which it only finds at the root |
 
@@ -161,9 +160,17 @@ published action schema instead. Nothing else in the job reads a composite as
 YAML, which is why `yamllint` runs first: a file that does not parse at all
 reads to every later step as an empty one.
 
-The linters are pinned in `.github/requirements-lint.txt` so that a linter
-release cannot turn `main` red on its own. actionlint is pinned by tag and
-digest together; Renovate reads the tag and updates the digest.
+Every version this repository installs is pinned, so that a release of
+something else cannot turn `main` red on its own. The linters are named with
+`==` in the step that installs them rather than in a requirements file, and
+gcovr the same way in `install-cpp-coverage-tool`. No manager reads a version
+out of a `run:` block, so `renovate.json` carries a `customManagers` entry
+that does, matching `name==version` in a workflow or an `action.yml`.
+actionlint is pinned by tag and digest together, and Renovate reads the tag.
+
+`--only-binary :all:` goes on every `pip install` here. Building a source
+distribution runs the setup script it carries, and everything installed
+publishes wheels for the platforms it is installed on.
 
 Actions are pinned by digest everywhere, under a 14-day minimum release age
 that security advisories skip. The `# v7` after a digest is not decoration —

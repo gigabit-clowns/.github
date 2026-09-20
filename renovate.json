@@ -17,5 +17,19 @@
       "matchDepNames": ["gigabit-clowns/.github"],
       "enabled": false
     }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Python packages pinned inside a run: block, which no manager reads",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.yml$/",
+        "/^\\.github/composites/.+/action\\.yml$/"
+      ],
+      "matchStrings": [
+        "(?<depName>[A-Za-z0-9._-]+)==(?<currentValue>[0-9][^\\s\\\\]*)"
+      ],
+      "datasourceTemplate": "pypi"
+    }
   ]
 }
