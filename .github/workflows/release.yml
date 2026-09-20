@@ -4,6 +4,13 @@ permissions:
 
 on:
   workflow_call:
+    secrets:
+      W2W_CLIENT_ID:
+        description: Client ID of the app the tag and the release are made as.
+        required: true
+      W2W_APP_PRIVATE_KEY:
+        description: Private key of that app.
+        required: true
 
 jobs:
   tag_and_release:
@@ -39,7 +46,7 @@ jobs:
       id: generate_token
       uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
       with:
-        client-id: ${{ secrets.W2W_APP_ID }}
+        client-id: ${{ secrets.W2W_CLIENT_ID }}
         private-key: ${{ secrets.W2W_APP_PRIVATE_KEY }}
 
     - name: Generate tag

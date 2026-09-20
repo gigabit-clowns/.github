@@ -64,6 +64,22 @@ action that uses it are always the same commit.
 `lint.yml` is the only one that is not `workflow_call`. Every other workflow
 runs in the repository that calls it, and has no effect on a push to this one.
 
+A called workflow sees no secret it was not handed. The organization secrets a
+repository reads directly are not in its `secrets` context, so `release.yml`
+names the two it needs under `workflow_call`, and a caller has to pass them:
+
+```yaml
+jobs:
+  tag_and_release:
+    uses: gigabit-clowns/.github/.github/workflows/release.yml@main
+    secrets:
+      W2W_CLIENT_ID: ${{ secrets.W2W_CLIENT_ID }}
+      W2W_APP_PRIVATE_KEY: ${{ secrets.W2W_APP_PRIVATE_KEY }}
+```
+
+The job runs under the `release` environment, which is the caller's own. Every
+caller has one, and none of them keeps the app secrets there.
+
 ## The caches
 
 Three composites cooperate, and they only work in pairs. `restore-ccache`
