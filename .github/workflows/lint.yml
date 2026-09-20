@@ -37,7 +37,8 @@ jobs:
           python-version: '3.14'
 
       - name: Install the linters
-        run: pip install -r .github/requirements-lint.txt
+        run: |
+          pip install --only-binary :all: -r .github/requirements-lint.txt
 
       - name: Check that every YAML file parses
         run: yamllint --strict .
