@@ -1,5 +1,9 @@
 {
   "editor.insertSpaces": true,
   "editor.detectIndentation": false,
-  "editor.tabSize": 2
+  "editor.tabSize": 2,
+  "sonarlint.connectedMode.project": {
+    "connectionId": "gigabit-clowns",
+    "projectKey": "gigabit-clowns_.github"
+  }
 }
