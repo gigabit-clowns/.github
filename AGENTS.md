@@ -140,6 +140,13 @@ MSVC is the exception in every step of this: OpenCppCoverage writes Cobertura
 rather than lcov, so the normalization is done by
 `.github/scripts/coverage/msvc_path_normalization.py` instead of by `sed`.
 
+## Pull requests
+
+Whoever opens a pull request assigns it to themselves and gives it the label,
+among the repository's own, that matches what it changes: `bug` for a fix,
+`enhancement` for something new, `documentation` when only documentation
+changes, and so on.
+
 ## Continuous integration
 
 `lint.yml`, on pull requests, on pushes to `main` that touch something other
