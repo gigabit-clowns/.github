@@ -11,11 +11,6 @@
   },
   "packageRules": [
     {
-      "description": "Security advisories bypass the 14-day delay",
-      "matchJsonata": ["$exists(vulnerabilityFixVersion)"],
-      "minimumReleaseAge": "0 days"
-    },
-    {
       "description": "Avoid internal call SHAs infinite update loop",
       "matchDepNames": ["gigabit-clowns/.github"],
       "enabled": false
