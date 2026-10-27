@@ -213,6 +213,12 @@ actionlint is pinned by tag and digest together, and Renovate reads the tag.
 distribution runs the setup script it carries, and everything installed
 publishes wheels for the platforms it is installed on.
 
+That is also what holds `lint.yml` on Python 3.14. PyYAML, which yamllint
+depends on, publishes no `cp315` wheel, so `renovate.json` caps the `python`
+input of `setup-python` below 3.15. When a PyYAML release ships `cp315`
+wheels, drop that rule and move `lint.yml` and the `--python-version` of the
+compile together.
+
 Actions are pinned by digest everywhere, under a 14-day minimum release age
 that security advisories skip. The `# v7` after a digest is not decoration —
 Renovate reads it — so it stays.

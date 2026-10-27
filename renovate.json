@@ -20,6 +20,12 @@
       "matchManagers": ["pip_requirements"],
       "matchFileNames": [".github/requirements-lint.txt"],
       "enabled": false
+    },
+    {
+      "description": "PyYAML, which yamllint needs, publishes no wheel past cp314, and the linters install with --only-binary. Lift this once it does",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["python"],
+      "allowedVersions": "<3.15"
     }
   ],
   "customManagers": [
