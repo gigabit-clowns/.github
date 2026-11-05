@@ -6,6 +6,7 @@
   ],
   "minimumReleaseAge": "14 days",
   "internalChecksFilter": "strict",
+  "automerge": true,
   "pip-compile": {
     "managerFilePatterns": ["/^\\.github/requirements-lint\\.txt$/"]
   },
