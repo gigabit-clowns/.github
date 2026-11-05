@@ -13,6 +13,13 @@ on:
         required: false
         default: ""
         type: string
+      prefixes:
+        description: >-
+          A JSON list of key prefixes, each a group of which only the newest
+          is kept. A key outside every one is grouped by its stem.
+        required: false
+        default: "[]"
+        type: string
       target_mib:
         description: What the headroom pass frees down to.
         required: false
@@ -31,6 +38,7 @@ jobs:
       with:
         scope: ${{ inputs.scope }}
         ref: ${{ inputs.ref }}
+        prefixes: ${{ inputs.prefixes }}
         token: ${{ github.token }}
 
   headroom:
