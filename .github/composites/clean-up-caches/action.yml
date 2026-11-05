@@ -80,7 +80,13 @@ runs:
 
         caches=$(cat "$RUNNER_TEMP/caches.json")
         case "$SCOPE" in
-          superseded) doomed=$(select_superseded "$caches" "$PATTERNS") ;;
+          superseded)
+            if [ -z "${PATTERNS//[[:space:]]/}" ]; then
+              echo "The superseded scope needs patterns naming the cache families" >&2
+              exit 1
+            fi
+            doomed=$(select_superseded "$caches" "$PATTERNS")
+            ;;
           headroom)
             dead=$(select_dead "$caches" "$(live_refs)")
             doomed=$(jq -c -n --argjson d "$dead" --argjson m \
