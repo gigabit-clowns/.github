@@ -94,13 +94,12 @@ Facts that the code cannot state and that a change here has to respect:
 
 - A GitHub cache entry cannot be overwritten. Every run leaves a new entry, and
   only the newest of a prefix is ever restored — which is what makes
-  `select_superseded` in `caches.sh` safe: it groups a key by the longest of
-  the caller's `prefixes` it starts with, or else strips the tail that makes
-  it unique (a timestamp, a 40-character commit SHA, a run id, CodeQL's
-  commit-run-attempt), and keeps the newest of each group. A tool whose tail
-  is a hash of its inputs, as `rust-cache`'s, needs its prefixes passed. Under `fetched-`, a 64-character content hash counts as
-  part of the group instead, because there the newest hash is the version the
-  repository has moved to.
+  `select_superseded` in `caches.sh` safe: it keeps the newest of each family
+  of caches. A caller names its families as `patterns`, `*` for what varies,
+  and a cache no pattern matches is left alone; the shared code knows no tool.
+  A caller that passes none gets the old stems instead (a timestamp, a
+  40-character commit, a run id, and under `fetched-` a 64-character content
+  hash), until every repository names its own.
 - A cache path is hashed exactly as written, so it has to carry the runner's
   own separator. Both `save-ccache` and `keep-caches-warm` spell the Windows
   path with a backslash for that reason, and a restore that spells it

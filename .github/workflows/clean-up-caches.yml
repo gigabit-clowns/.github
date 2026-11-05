@@ -13,12 +13,15 @@ on:
         required: false
         default: ""
         type: string
-      prefixes:
+      patterns:
         description: >-
-          A JSON list of key prefixes, each a group of which only the newest
-          is kept. A key outside every one is grouped by its stem.
+          One key pattern per line, `*` standing for what varies between the
+          caches of one family. Of the caches the first matching pattern
+          names on one ref, only the newest is kept; a cache no pattern
+          matches is never superseded. Left empty, a key's timestamp, commit,
+          run id or `fetched-` hash is what varies.
         required: false
-        default: "[]"
+        default: ""
         type: string
       target_mib:
         description: What the headroom pass frees down to.
@@ -38,7 +41,7 @@ jobs:
       with:
         scope: ${{ inputs.scope }}
         ref: ${{ inputs.ref }}
-        prefixes: ${{ inputs.prefixes }}
+        patterns: ${{ inputs.patterns }}
         token: ${{ github.token }}
 
   headroom:
