@@ -82,6 +82,7 @@ runs:
             printf '%s' "$dead" > "$RUNNER_TEMP/dead.json"
             ;;
           all) doomed="$caches" ;;
+          *) echo "Unknown scope '$SCOPE'" >&2; exit 1 ;;
         esac
         printf '%s' "$doomed" > "$RUNNER_TEMP/doomed.json"
 
