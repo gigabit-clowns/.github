@@ -3,12 +3,12 @@
 CACHE_LIMIT_MIB=10240
 
 report_usage() {
-	local all used_mib count
+	local label="$1" all used_mib count
 	all=$(all_caches)
 	used_mib=$(jq '([.[].sizeInBytes] | add // 0) / 1048576 | floor' <<<"$all")
 	count=$(jq 'length' <<<"$all")
 	printf '%s: %s MiB of %s MiB across %s caches, %s MiB available\n' \
-		"$1" "$used_mib" "$CACHE_LIMIT_MIB" "$count" \
+		"$label" "$used_mib" "$CACHE_LIMIT_MIB" "$count" \
 		"$(( CACHE_LIMIT_MIB - used_mib ))"
 }
 
@@ -46,13 +46,15 @@ in_scope() {
 }
 
 tabulate() {
+	local caches="$1"
 	jq -r 'if length == 0 then "  none"
 	       else sort_by(.ref, .key)[]
 	            | "  \(((.sizeInBytes/1048576)|floor|tostring)) MiB\t\(.ref)\t\(.key)"
-	       end' <<<"$1" | column -t -s "$(printf '\t')"
+	       end' <<<"$caches" | column -t -s "$(printf '\t')"
 }
 
 select_superseded() {
+	local caches="$1"
 	jq -c '
 		def stem:
 			(if startswith("fetched-")
@@ -63,7 +65,7 @@ select_superseded() {
 			| sub("-[0-9]{6,}$"; "");
 		group_by(.ref + "|" + (.key | stem))
 		| map(sort_by(.createdAt) | .[0:-1])
-		| flatten' <<<"$1"
+		| flatten' <<<"$caches"
 }
 
 live_refs() {
@@ -78,17 +80,20 @@ live_refs() {
 }
 
 select_dead() {
-	jq -c --argjson live "$(printf '%s\n' "$2" | jq -R . | jq -s .)" \
-		'[.[] | select(.ref as $r | $live | index($r) | not)]' <<<"$1"
+	local caches="$1" live="$2"
+	jq -c --argjson live "$(printf '%s\n' "$live" | jq -R . | jq -s .)" \
+		'[.[] | select(.ref as $r | $live | index($r) | not)]' <<<"$caches"
 }
 
 without() {
-	jq -c --argjson gone "$2" \
-		'[.[] | select(.id as $i | $gone | map(.id) | index($i) | not)]' <<<"$1"
+	local caches="$1" gone="$2"
+	jq -c --argjson gone "$gone" \
+		'[.[] | select(.id as $i | $gone | map(.id) | index($i) | not)]' <<<"$caches"
 }
 
 select_headroom() {
-	jq -c --argjson t "$(( $2 * 1048576 ))" '
+	local caches="$1" target_mib="$2"
+	jq -c --argjson t "$(( target_mib * 1048576 ))" '
 		([.[].sizeInBytes] | add // 0) as $total
 		| if $total <= $t then []
 		  else
@@ -101,9 +106,10 @@ select_headroom() {
 		               out: (.out + [$c[$i]])}
 		         else . end)
 		    | .out
-		  end' <<<"$1"
+		  end' <<<"$caches"
 }
 
 total_mib() {
-	jq '([.[].sizeInBytes] | add // 0) / 1048576 | floor' <<<"$1"
+	local caches="$1"
+	jq '([.[].sizeInBytes] | add // 0) / 1048576 | floor' <<<"$caches"
 }
