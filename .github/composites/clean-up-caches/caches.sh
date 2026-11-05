@@ -58,15 +58,8 @@ tabulate() {
 }
 
 select_superseded() {
-	local caches="$1" patterns="${2:-}"
+	local caches="$1" patterns="$2"
 	jq -c --arg patterns "$patterns" '
-		def stem:
-			(if startswith("fetched-")
-			 then sub("-[0-9a-f]{64}$"; "")
-			 else . end)
-			| sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$"; "")
-			| sub("-[0-9a-f]{40}$"; "")
-			| sub("-[0-9]{6,}$"; "");
 		def regex:
 			"^" + (split("*")
 			       | map(gsub("(?<c>[.+?^$(){}|\\[\\]\\\\])"; "\\\(.c)"))
@@ -74,11 +67,9 @@ select_superseded() {
 		($patterns | split("\n") | map(gsub("^\\s+|\\s+$"; ""))
 		 | map(select(length > 0))) as $families
 		| def family:
-			if ($families | length) == 0 then stem
-			else . as $key
-			     | first($families[] | select(. as $p | $key | test($p | regex)))
-			       // null
-			end;
+			. as $key
+			| first($families[] | select(. as $p | $key | test($p | regex)))
+			  // null;
 		map(.family = (.key | family))
 		| map(select(.family != null))
 		| group_by(.ref + "|" + .family)

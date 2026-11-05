@@ -18,8 +18,7 @@ on:
           One key pattern per line, `*` standing for what varies between the
           caches of one family. Of the caches the first matching pattern
           names on one ref, only the newest is kept; a cache no pattern
-          matches is never superseded. Left empty, a key's timestamp, commit,
-          run id or `fetched-` hash is what varies.
+          matches is never superseded. Required by the superseded scope.
         required: false
         default: ""
         type: string
