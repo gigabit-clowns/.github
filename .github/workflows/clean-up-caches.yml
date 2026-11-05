@@ -13,15 +13,15 @@ on:
         required: false
         default: ""
         type: string
-      tails:
+      patterns:
         description: >-
-          A JSON list of regular expressions for what varies between the
-          caches of one group: a timestamp, a commit, a run id or a content
-          hash when left out.
+          One key pattern per line, `*` standing for what varies between the
+          caches of one family. Of the caches the first matching pattern
+          names on one ref, only the newest is kept; a cache no pattern
+          matches is never superseded. Left empty, a key's timestamp, commit,
+          run id or `fetched-` hash is what varies.
         required: false
-        default: >-
-          ["-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$", "-[0-9a-f]{64}$",
-           "-[0-9a-f]{40}$", "-[0-9]{6,}$"]
+        default: ""
         type: string
       target_mib:
         description: What the headroom pass frees down to.
@@ -41,7 +41,7 @@ jobs:
       with:
         scope: ${{ inputs.scope }}
         ref: ${{ inputs.ref }}
-        tails: ${{ inputs.tails }}
+        patterns: ${{ inputs.patterns }}
         token: ${{ github.token }}
 
   headroom:

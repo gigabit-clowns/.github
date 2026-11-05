@@ -9,12 +9,12 @@ inputs:
     description: Ref or branch to restrict to. Every ref when left empty.
     required: false
     default: ""
-  tails:
+  patterns:
     description: >-
-      A JSON list of regular expressions for what varies between the caches
-      of one group. Each is removed from a key in turn; what is left names
-      its group, of which only the newest is kept.
-    required: true
+      One key pattern per line, `*` standing for what varies; see the
+      clean-up-caches workflow.
+    required: false
+    default: ""
   target_mib:
     description: What the headroom scope frees down to.
     required: false
@@ -72,7 +72,7 @@ runs:
         GH_TOKEN: ${{ inputs.token }}
         GH_REPO: ${{ github.repository }}
         SCOPE: ${{ inputs.scope }}
-        TAILS: ${{ inputs.tails }}
+        PATTERNS: ${{ inputs.patterns }}
         TARGET_MIB: ${{ inputs.target_mib }}
       run: |
         set -euo pipefail
@@ -80,7 +80,7 @@ runs:
 
         caches=$(cat "$RUNNER_TEMP/caches.json")
         case "$SCOPE" in
-          superseded) doomed=$(select_superseded "$caches" "$TAILS") ;;
+          superseded) doomed=$(select_superseded "$caches" "$PATTERNS") ;;
           headroom)
             dead=$(select_dead "$caches" "$(live_refs)")
             doomed=$(jq -c -n --argjson d "$dead" --argjson m \
