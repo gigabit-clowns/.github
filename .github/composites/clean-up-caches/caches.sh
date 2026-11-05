@@ -61,7 +61,11 @@ select_superseded() {
 			 then sub("-[0-9a-f]{64}$"; "")
 			 else . end)
 			| sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$"; "")
-			| sub("-[0-9a-f]{40}-[0-9]+-[0-9]+$"; "")
+			| sub("(-[0-9]+(\\.[0-9]+)+)?-[0-9a-f]{40}-[0-9]+-[0-9]+$"; "")
+			| (if startswith("codspeed-instruments-")
+			   then sub("-[a-z]+-[0-9]+(\\.[0-9]+)*-(?<arch>X64|X86|ARM64|ARM)-.*$";
+			            "-\(.arch)")
+			   else . end)
 			| sub("-[0-9a-f]{40}$"; "")
 			| sub("-[0-9]{6,}$"; "");
 		def group:
