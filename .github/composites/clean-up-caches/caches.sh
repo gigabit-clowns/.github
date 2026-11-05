@@ -13,8 +13,12 @@ report_usage() {
 }
 
 all_caches() {
-	gh cache list --limit 100 \
-		--json id,key,ref,sizeInBytes,createdAt,lastAccessedAt
+	gh api --paginate "repos/$GH_REPO/actions/caches?per_page=100" \
+		--jq '.actions_caches[] | {id, key, ref,
+			sizeInBytes: .size_in_bytes,
+			createdAt: .created_at,
+			lastAccessedAt: .last_accessed_at}' \
+		| jq -s -c .
 }
 
 resolve_refs() {
@@ -54,21 +58,10 @@ tabulate() {
 }
 
 select_superseded() {
-	local caches="$1" prefixes="${2:-[]}"
-	jq -c --argjson prefixes "$prefixes" '
-		def stem:
-			(if startswith("fetched-")
-			 then sub("-[0-9a-f]{64}$"; "")
-			 else . end)
-			| sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T.*$"; "")
-			| sub("-[0-9a-f]{40}-[0-9]+-[0-9]+$"; "")
-			| sub("-[0-9a-f]{40}$"; "")
-			| sub("-[0-9]{6,}$"; "");
-		def group:
-			. as $key
-			| ([$prefixes[] | select(. as $p | $key | startswith($p))]
-			   | max_by(length)) // ($key | stem);
-		group_by(.ref + "|" + (.key | group))
+	local caches="$1" tails="$2"
+	jq -c --argjson tails "$tails" '
+		def stem: reduce $tails[] as $tail (.; sub($tail; ""));
+		group_by(.ref + "|" + (.key | stem))
 		| map(sort_by(.createdAt) | .[0:-1])
 		| flatten' <<<"$caches"
 }

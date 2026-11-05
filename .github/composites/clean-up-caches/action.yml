@@ -9,12 +9,12 @@ inputs:
     description: Ref or branch to restrict to. Every ref when left empty.
     required: false
     default: ""
-  prefixes:
+  tails:
     description: >-
-      A JSON list of key prefixes. A key that starts with one is grouped by
-      the longest, and only the newest of the group is kept.
-    required: false
-    default: "[]"
+      A JSON list of regular expressions for what varies between the caches
+      of one group. Each is removed from a key in turn; what is left names
+      its group, of which only the newest is kept.
+    required: true
   target_mib:
     description: What the headroom scope frees down to.
     required: false
@@ -72,7 +72,7 @@ runs:
         GH_TOKEN: ${{ inputs.token }}
         GH_REPO: ${{ github.repository }}
         SCOPE: ${{ inputs.scope }}
-        PREFIXES: ${{ inputs.prefixes }}
+        TAILS: ${{ inputs.tails }}
         TARGET_MIB: ${{ inputs.target_mib }}
       run: |
         set -euo pipefail
@@ -80,7 +80,7 @@ runs:
 
         caches=$(cat "$RUNNER_TEMP/caches.json")
         case "$SCOPE" in
-          superseded) doomed=$(select_superseded "$caches" "$PREFIXES") ;;
+          superseded) doomed=$(select_superseded "$caches" "$TAILS") ;;
           headroom)
             dead=$(select_dead "$caches" "$(live_refs)")
             doomed=$(jq -c -n --argjson d "$dead" --argjson m \
