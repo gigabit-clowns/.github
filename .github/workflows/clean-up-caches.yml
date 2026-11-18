@@ -22,6 +22,15 @@ on:
         required: false
         default: ""
         type: string
+      by_stem:
+        description: >-
+          Keep the newest of each key stem a pattern matches rather than of
+          the whole pattern. The stem is the key without the dates, hashes and
+          long numbers it ends in, so one pattern such as `ccache-*` covers
+          every family it names.
+        required: false
+        default: false
+        type: boolean
       target_mib:
         description: What the headroom pass frees down to.
         required: false
@@ -41,6 +50,7 @@ jobs:
         scope: ${{ inputs.scope }}
         ref: ${{ inputs.ref }}
         patterns: ${{ inputs.patterns }}
+        by_stem: ${{ inputs.by_stem }}
         token: ${{ github.token }}
 
   headroom:
