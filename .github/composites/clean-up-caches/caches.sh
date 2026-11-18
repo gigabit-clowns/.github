@@ -65,7 +65,7 @@ select_superseded() {
 			       | map(gsub("(?<c>[.+?^$(){}|\\[\\]\\\\])"; "\\\(.c)"))
 			       | join(".*")) + "$";
 		def stem:
-			"-([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z|[0-9a-f]{7,}|[0-9]{8,}(\\.[0-9]+)?)$" as $version
+			"-([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z|[0-9a-f]{7,}|[0-9]{8,}(\\.[0-9]+)*)$" as $version
 			| if test($version) then sub($version; "") | stem else . end;
 		($patterns | split("\n") | map(gsub("^\\s+|\\s+$"; ""))
 		 | map(select(length > 0))) as $families
