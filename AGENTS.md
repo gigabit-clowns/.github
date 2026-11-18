@@ -98,6 +98,12 @@ Facts that the code cannot state and that a change here has to respect:
   of caches. A caller names its families as `patterns`, `*` for what varies,
   and a cache no pattern matches is left alone; the shared code knows no tool.
   `superseded` without patterns fails rather than deleting nothing.
+- With `by_stem` a family is a pattern and a key stem: the key without the
+  ISO dates, hex hashes and numbers of eight digits or more it ends in, so
+  `ccache-*` keeps one cache per job rather than one in all. It is off by
+  default because a key that ends in something else that varies, a run
+  attempt for instance, never shares a stem with its older self and would be
+  kept forever.
 - A cache path is hashed exactly as written, so it has to carry the runner's
   own separator. Both `save-ccache` and `keep-caches-warm` spell the Windows
   path with a backslash for that reason, and a restore that spells it

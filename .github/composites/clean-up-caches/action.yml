@@ -15,6 +15,12 @@ inputs:
       clean-up-caches workflow.
     required: false
     default: ""
+  by_stem:
+    description: >-
+      Whether the superseded scope tells families apart by their keys' stem
+      as well; see the clean-up-caches workflow.
+    required: false
+    default: "false"
   target_mib:
     description: What the headroom scope frees down to.
     required: false
@@ -73,6 +79,7 @@ runs:
         GH_REPO: ${{ github.repository }}
         SCOPE: ${{ inputs.scope }}
         PATTERNS: ${{ inputs.patterns }}
+        BY_STEM: ${{ inputs.by_stem }}
         TARGET_MIB: ${{ inputs.target_mib }}
       run: |
         set -euo pipefail
@@ -85,7 +92,11 @@ runs:
               echo "The superseded scope needs patterns naming the cache families" >&2
               exit 1
             fi
-            doomed=$(select_superseded "$caches" "$PATTERNS")
+            case "$BY_STEM" in
+              true|false) ;;
+              *) echo "by_stem is '$BY_STEM', not true or false" >&2; exit 1 ;;
+            esac
+            doomed=$(select_superseded "$caches" "$PATTERNS" "$BY_STEM")
             ;;
           headroom)
             dead=$(select_dead "$caches" "$(live_refs)")
