@@ -57,7 +57,7 @@ runs:
       if: ${{ steps.dotnet.outputs.found != 'true' }}
       uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
       with:
-        dotnet-version: 10.x
+        dotnet-version: 11.x
         dotnet-quality: 'ga'
 
     - name: Merge coverage reports (ReportGenerator)
